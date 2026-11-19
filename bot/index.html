@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unitable's feed checker</title>
+<meta name="description" content="What the Unitable and UnitableBot user agents are, how often they fetch, and how to contact us.">
+<style>
+  :root { --bg: #F4F4F1; --text: #18181B; --muted: #5F5F66; --link: #2563EB; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #0E0E10; --text: #F2F2F3; --muted: #A1A1AA; --link: #7AA2FF; } }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif; }
+  main { max-width: 680px; margin: 0 auto; padding: 48px 16px 80px; }
+  h1 { font-size: 34px; line-height: 1.15; margin: 0 0 16px; }
+  h2 { font-size: 21px; margin: 36px 0 8px; }
+  li { margin: 4px 0; }
+  code { font-size: 15px; }
+  a { color: var(--link); }
+</style>
+</head>
+<body>
+<main>
+<h1>Unitable's feed checker</h1>
+<p>If you've seen <code>Unitable/0.1</code> or <code>UnitableBot/0.1</code> in your server logs, it's us. Unitable is a student-made timetable app, currently in testing at ANU.</p>
+
+<h2>Unitable/0.1: students' own calendar feeds</h2>
+<p>When a student connects their timetable (e.g. MyTimetable) or Canvas calendar, Unitable fetches that student's private calendar feed on their behalf, so their app stays up to date. It only fetches feeds students have connected themselves, and never signs in for them.</p>
+<ul>
+  <li>Each feed is checked at most once an hour, at the start of semester; every 3 hours during teaching and exams; every 12 hours in breaks.</li>
+  <li>A student opening the app can trigger an earlier check, at most once every 30 minutes.</li>
+  <li>We send <code>If-None-Match</code> / <code>If-Modified-Since</code>, so unchanged feeds cost a 304.</li>
+  <li>Failing feeds back off, and links that stop working are no longer fetched.</li>
+</ul>
+
+<h2>UnitableBot/0.1: public pages</h2>
+<p>Unitable reads a few public uni pages, such as room bookings and key dates, and caches them centrally, so each student's app doesn't fetch them separately. These are refreshed no faster than the pages change, at most every few hours.</p>
+
+<h2>Contact</h2>
+<p>If this is causing a problem, or you'd like us to fetch less often or from a different address, email <a href="mailto:hello@unitable.net">hello@unitable.net</a> and we'll sort it out quickly.</p>
+</main>
+</body>
+</html>
