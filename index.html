@@ -2,24 +2,314 @@
 <html lang="en-AU">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Unitable</title>
-<meta name="description" content="Your uni timetable, due dates and free rooms, kept up to date for you.">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Unitable: your uni day, answered</title>
+<meta name="description" content="Your ANU timetable, Canvas due dates, free rooms and friends' free time in one app, kept up to date automatically. Free beta on TestFlight.">
+<meta property="og:title" content="Unitable: your uni day, answered">
+<meta property="og:description" content="Timetable, due dates, free rooms and friends, in one app. For ANU students.">
+<meta property="og:image" content="https://unitable.net/img/today.jpg">
+<meta name="theme-color" content="#F4F4F1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E0E10" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <style>
-  :root { --bg: #F4F4F1; --text: #18181B; --muted: #5F5F66; --link: #2563EB; }
-  @media (prefers-color-scheme: dark) { :root { --bg: #0E0E10; --text: #F2F2F3; --muted: #A1A1AA; --link: #7AA2FF; } }
-  body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif; }
-  main { max-width: 680px; margin: 0 auto; padding: 72px 16px; }
-  h1 { font-size: 40px; margin: 0 0 8px; }
-  p { color: var(--muted); }
-  a { color: var(--link); }
+  :root {
+    --bg: #F4F4F1; --surface: #FFFFFF; --ink: #18181B; --muted: #5F5F66; --faint: #8E8E93; --line: #E3E3DE;
+    --blue: #0A64D6; --orange: #B25E00; --green: #1E8E3E; --red: #D6204B; --purple: #6E4FD8;
+    --phone: #0B0B0D; --radius: 22px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0E0E10; --surface: #1A1A1E; --ink: #F2F2F3; --muted: #A1A1AA; --faint: #7A7A82; --line: #2A2A2E;
+      --blue: #4C9BFF; --orange: #FFA94D; --green: #4ADE80; --red: #FF6B8A; --purple: #A996FF; }
+    /* The phone's black frame needs an edge to show against a dark page. */
+    .phone { box-shadow: 0 30px 60px rgba(0,0,0,0.5), 0 0 0 1.5px rgba(255,255,255,0.14); }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, system-ui, sans-serif; }
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  img { display: block; max-width: 100%; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+  @media (min-width: 720px) { .wrap { padding: 0 32px; } }
+
+  /* Nav */
+  nav { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: saturate(1.6) blur(18px); -webkit-backdrop-filter: saturate(1.6) blur(18px); border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent); }
+  nav .wrap { display: flex; align-items: center; gap: 12px; height: 60px; }
+  .brand { display: flex; align-items: center; gap: 10px; color: var(--ink); font-weight: 700; font-size: 19px; }
+  .brand:hover { text-decoration: none; }
+  .brand img { width: 32px; height: 32px; border-radius: 8px; box-shadow: 0 0 0 1px var(--line); }
+  nav .links { margin-left: auto; display: flex; align-items: center; gap: 22px; font-size: 15px; }
+  nav .links a.plain { color: var(--muted); }
+  @media (max-width: 640px) { nav .links a.plain { display: none; } }
+
+  .button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 22px; border-radius: 999px; font-weight: 600; font-size: 17px; background: var(--blue); color: #fff; }
+  .button:hover { text-decoration: none; filter: brightness(1.06); }
+  .button.small { min-height: 36px; padding: 0 16px; font-size: 15px; }
+  .button.ghost { background: var(--surface); color: var(--ink); box-shadow: 0 0 0 1px var(--line) inset; }
+
+  /* Phone */
+  .phone { width: var(--w, 300px); max-width: 100%; aspect-ratio: 1206 / 2622; padding: calc(var(--w, 300px) * 0.034); border-radius: calc(var(--w, 300px) * 0.17); background: var(--phone); box-shadow: 0 30px 60px rgba(0,0,0,0.16), 0 0 0 1px rgba(255,255,255,0.06) inset; position: relative; box-sizing: content-box; }
+  .phone img { width: 100%; height: 100%; object-fit: cover; border-radius: calc(var(--w, 300px) * 0.138); }
+  .phone::after { content: ""; position: absolute; top: calc(var(--w, 300px) * 0.06); left: 50%; width: calc(var(--w, 300px) * 0.30); height: calc(var(--w, 300px) * 0.088); transform: translateX(-50%); border-radius: 999px; background: #000; }
+
+  /* Hero */
+  .hero { padding: 56px 0 40px; }
+  .hero .wrap { display: grid; gap: 40px; align-items: center; }
+  @media (min-width: 900px) { .hero { padding: 88px 0 72px; } .hero .wrap { grid-template-columns: 1.15fr 0.85fr; } }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--muted); background: var(--surface); padding: 6px 12px; border-radius: 999px; box-shadow: 0 0 0 1px var(--line) inset; }
+  .eyebrow .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+  h1 { font-size: clamp(44px, 8vw, 84px); line-height: 1.02; font-weight: 800; margin: 20px 0 18px; }
+  h1 .answer { color: var(--orange); }
+  .lead { font-size: clamp(18px, 2.2vw, 22px); color: var(--muted); max-width: 34em; margin: 0 0 28px; }
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .note { font-size: 14px; color: var(--faint); margin-top: 14px; }
+  .hero .shot { display: flex; justify-content: center; --w: min(330px, 74vw); }
+
+  /* Sections */
+  section { padding: 64px 0; }
+  @media (min-width: 900px) { section { padding: 96px 0; } }
+  h2 { font-size: clamp(32px, 5vw, 52px); line-height: 1.06; font-weight: 800; margin: 0 0 16px; }
+  .kicker { font-weight: 700; font-size: 17px; margin-bottom: 10px; }
+  .sub { color: var(--muted); font-size: 19px; max-width: 32em; margin: 0; }
+  .center { text-align: center; }
+  .center .sub { margin: 0 auto; }
+
+  .feature .wrap { display: grid; gap: 36px; align-items: center; }
+  .feature .shot { display: flex; justify-content: center; --w: min(300px, 70vw); }
+  @media (min-width: 900px) {
+    .feature .wrap { grid-template-columns: 1fr 1fr; gap: 72px; }
+    .feature.flip .shot { order: 2; }
+  }
+  .feature ul { list-style: none; padding: 0; margin: 22px 0 0; display: grid; gap: 10px; }
+  .feature li { display: flex; gap: 10px; color: var(--muted); }
+  .feature li::before { content: ""; flex: none; width: 6px; height: 6px; margin-top: 10px; border-radius: 50%; background: currentColor; opacity: 0.6; }
+
+  .band { background: var(--surface); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+
+  /* Video */
+  .video { margin-top: 36px; border-radius: var(--radius); overflow: hidden; background: #000; box-shadow: 0 30px 60px rgba(0,0,0,0.14); aspect-ratio: 16 / 9; }
+  .video video { width: 100%; height: 100%; display: block; }
+
+  /* Steps and grid */
+  .steps { display: grid; gap: 16px; margin-top: 40px; counter-reset: step; }
+  @media (min-width: 800px) { .steps { grid-template-columns: repeat(3, 1fr); } }
+  .card { background: var(--bg); border-radius: var(--radius); padding: 24px; box-shadow: 0 0 0 1px var(--line) inset; }
+  .band .card { background: var(--bg); }
+  .steps .card::before { counter-increment: step; content: counter(step); display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--blue); color: #fff; font-weight: 700; margin-bottom: 14px; }
+  .card h3 { margin: 0 0 6px; font-size: 20px; }
+  .card p { margin: 0; color: var(--muted); }
+  .grid { display: grid; gap: 16px; margin-top: 40px; }
+  @media (min-width: 700px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1000px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+  .grid .card { background: var(--surface); }
+  .icon { width: 40px; height: 40px; border-radius: 11px; display: grid; place-items: center; margin-bottom: 14px; color: #fff; font-size: 20px; }
+
+  /* FAQ */
+  details { border-bottom: 1px solid var(--line); padding: 18px 0; }
+  summary { cursor: pointer; font-weight: 600; font-size: 19px; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "+"; color: var(--faint); font-weight: 400; }
+  details[open] summary::after { content: "–"; }
+  details p { color: var(--muted); margin: 10px 0 0; max-width: 46em; }
+  .faq { max-width: 760px; margin: 32px auto 0; }
+
+  footer { padding: 40px 0 56px; color: var(--faint); font-size: 14px; }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: 10px 24px; align-items: center; }
+  footer a { color: var(--muted); }
+  footer .grow { flex: 1; min-width: 200px; }
 </style>
 </head>
 <body>
-<main>
-  <h1>Unitable</h1>
-  <p>Your uni timetable, due dates and free rooms, kept up to date for you. Currently in testing at ANU.</p>
-  <p><a href="/privacy/">Privacy policy</a> · <a href="mailto:hello@unitable.net">Contact</a></p>
-</main>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="/"><img src="/icon.svg" alt="">Unitable</a>
+    <div class="links">
+      <a class="plain" href="#features">Features</a>
+      <a class="plain" href="#privacy">Privacy</a>
+      <a class="plain" href="#faq">FAQ</a>
+      <a class="button small js-beta" href="mailto:hello@unitable.net?subject=Unitable%20beta">Get the beta</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div>
+      <span class="eyebrow"><span class="dot"></span>Free beta on TestFlight · ANU</span>
+      <h1>Your uni day, <span class="answer">answered.</span></h1>
+      <p class="lead">Your timetable, Canvas due dates, free rooms and when your friends are free, in one app. Connect once and it keeps itself up to date.</p>
+      <div class="cta">
+        <a class="button js-beta" href="mailto:hello@unitable.net?subject=Unitable%20beta">Get the beta on TestFlight</a>
+        <a class="button ghost" href="#watch">Watch the tour</a>
+      </div>
+      <p class="note">Free · iPhone · Android coming later</p>
+    </div>
+    <div class="shot">
+      <div class="phone"><img src="/img/today.jpg" alt="Unitable's Today screen: MATH1013 in 44 minutes, with the day's classes and a free hour with a friend"></div>
+    </div>
+  </div>
+</header>
+
+<section id="watch" class="band">
+  <div class="wrap center">
+    <h2>See it in 15 seconds.</h2>
+    <p class="sub">Classes, deadlines, free rooms and friends, straight from the app.</p>
+    <div class="video">
+      <video src="/video/unitable-15s.mp4" poster="/video/poster.jpg" controls playsinline preload="none"></video>
+    </div>
+  </div>
+</section>
+
+<div id="features"></div>
+
+<section class="feature">
+  <div class="wrap">
+    <div class="shot"><div class="phone"><img src="/img/today.jpg" alt="Today: the next class and how long until it starts" loading="lazy"></div></div>
+    <div>
+      <div class="kicker" style="color: var(--orange)">Today</div>
+      <h2>Your next class, the second you look.</h2>
+      <p class="sub">Open the app and the answer is at the top: what's next, how long until it starts, and where. Free gaps are marked, so you know when you can grab lunch.</p>
+      <ul>
+        <li>Room, building and time for every class</li>
+        <li>Tap any class for the details</li>
+        <li>Swipe through the week, day by day</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="feature flip band">
+  <div class="wrap">
+    <div class="shot"><div class="phone"><img src="/img/week.jpg" alt="Week view: every class for the week, colour-coded by course" loading="lazy"></div></div>
+    <div>
+      <div class="kicker" style="color: var(--blue)">Week</div>
+      <h2>Your whole week at a glance.</h2>
+      <p class="sub">Every lecture, tutorial and lab, colour-coded by course. Hide classes you don't go to, and they stay hidden.</p>
+    </div>
+  </div>
+</section>
+
+<section class="feature">
+  <div class="wrap">
+    <div class="shot"><div class="phone"><img src="/img/due.jpg" alt="Due: upcoming Canvas assignments and quizzes" loading="lazy"></div></div>
+    <div>
+      <div class="kicker" style="color: var(--red)">Due</div>
+      <h2>Every deadline from Canvas.</h2>
+      <p class="sub">Assignments and quizzes from all your courses in one list, with the next one at the top and key uni dates alongside.</p>
+    </div>
+  </div>
+</section>
+
+<section class="feature flip band">
+  <div class="wrap">
+    <div class="shot"><div class="phone"><img src="/img/rooms.jpg" alt="Free rooms: hundreds of rooms free across campus, by building" loading="lazy"></div></div>
+    <div>
+      <div class="kicker" style="color: var(--green)">Rooms</div>
+      <h2>Find a free room. Now, or later.</h2>
+      <p class="sub">See which rooms on campus are free right now, in an hour or tomorrow, by building, with how many seats. Library study rooms are one tap away.</p>
+    </div>
+  </div>
+</section>
+
+<section class="feature">
+  <div class="wrap">
+    <div class="shot"><div class="phone"><img src="/img/friend.jpg" alt="A friend's page: times you're both free, and their week" loading="lazy"></div></div>
+    <div>
+      <div class="kicker" style="color: var(--purple)">Friends</div>
+      <h2>See when your friends are free.</h2>
+      <p class="sub">Add friends with a code and Unitable finds the times you're both free. You choose what each friend sees: nothing, just when you're busy, or your full timetable.</p>
+      <ul>
+        <li>Free-together times, today and this week</li>
+        <li>See which classes you share, if you both opt in</li>
+        <li>Change what someone sees any time</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap center">
+    <h2>Connect once. That's it.</h2>
+    <p class="sub">No copying timetables into a calendar. Unitable keeps everything current on its own.</p>
+    <div class="steps" style="text-align: left">
+      <div class="card"><h3>Sign in with your uni email</h3><p>We email you a 6-digit code. No password to remember.</p></div>
+      <div class="card"><h3>Connect MyTimetable and Canvas</h3><p>Sign in to them inside Unitable and it finds your calendar links for you.</p></div>
+      <div class="card"><h3>Done</h3><p>Changes to your classes show up automatically, and you're told when a class moves.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap center">
+    <h2>The little things, done properly.</h2>
+    <div class="grid" style="text-align: left">
+      <div class="card"><div class="icon" style="background: var(--red)">!</div><h3>Change alerts</h3><p>A room change or cancelled class? You get a notification, not a surprise.</p></div>
+      <div class="card"><div class="icon" style="background: var(--blue)">↓</div><h3>Works offline</h3><p>Your timetable and deadlines are saved on your phone for when the Wi-Fi isn't.</p></div>
+      <div class="card"><div class="icon" style="background: var(--green)">✓</div><h3>Your timetable, your way</h3><p>Hide classes you skip, or mark a class as free so friends see the truth.</p></div>
+      <div class="card"><div class="icon" style="background: var(--orange)">◷</div><h3>Built around your semester</h3><p>Knows teaching weeks, breaks and exam periods, so the week numbers are right.</p></div>
+      <div class="card"><div class="icon" style="background: var(--purple)">◎</div><h3>Feels like iPhone</h3><p>Native controls, Dark Mode, Dynamic Type. Nothing to learn.</p></div>
+      <div class="card"><div class="icon" style="background: #3F3F46">#</div><h3>Free</h3><p>No ads, no subscriptions, no selling your data.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="privacy" class="band">
+  <div class="wrap">
+    <div class="center">
+      <h2>Private by design.</h2>
+      <p class="sub">Your timetable is about you. We treat it that way.</p>
+    </div>
+    <div class="grid">
+      <div class="card"><h3>We never see your password</h3><p>You sign in to MyTimetable and Canvas on their own pages. Unitable only keeps the calendar link.</p></div>
+      <div class="card"><h3>Links are encrypted</h3><p>Your calendar links are encrypted and never shown again, not even to you.</p></div>
+      <div class="card"><h3>You decide what friends see</h3><p>Nothing is shared until you add a friend and choose what they can see.</p></div>
+      <div class="card"><h3>No tracking</h3><p>No ads, no analytics, no data sold. Ever.</p></div>
+      <div class="card"><h3>Stored in Australia</h3><p>Your data lives on servers in Sydney.</p></div>
+      <div class="card"><h3>Delete it all, any time</h3><p>One button in Settings removes your account and everything in it. <a href="/privacy/">Privacy policy</a></p></div>
+    </div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <h2 class="center">Questions</h2>
+    <div class="faq">
+      <details><summary>Which universities does it work with?</summary><p>ANU for now. Unitable is built so other universities can be added, so tell us if you'd like yours next.</p></details>
+      <details><summary>Is it made by ANU?</summary><p>No. Unitable is an independent app made by an ANU student. It isn't affiliated with or endorsed by the Australian National University.</p></details>
+      <details><summary>How does it get my timetable?</summary><p>MyTimetable and Canvas both give every student a private calendar link. You sign in once inside Unitable, it finds those links, and it checks them for changes from then on.</p></details>
+      <details><summary>How do I join the beta?</summary><p>Unitable is on TestFlight, Apple's app for trying apps before they're on the App Store. Tap "Get the beta", install TestFlight, then install Unitable from it.</p></details>
+      <details><summary>Is there an Android version?</summary><p>It's coming. The beta is iPhone first.</p></details>
+      <details><summary>What does it cost?</summary><p>Nothing.</p></details>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap center">
+    <h2>Your uni day, answered.</h2>
+    <p class="sub">Free for ANU students on iPhone.</p>
+    <div class="cta" style="justify-content: center; margin-top: 28px">
+      <a class="button js-beta" href="mailto:hello@unitable.net?subject=Unitable%20beta">Get the beta on TestFlight</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span class="grow">© 2026 Unitable. Not affiliated with the Australian National University.</span>
+    <a href="/privacy/">Privacy</a>
+    <a href="/bot/">For uni IT</a>
+    <a href="mailto:hello@unitable.net">hello@unitable.net</a>
+  </div>
+</footer>
+
+<script>
+  // The public TestFlight link, once Apple approves the beta. Until then the
+  // buttons open an email so people can still ask for an invite.
+  const TESTFLIGHT_URL = '';
+  if (TESTFLIGHT_URL) document.querySelectorAll('.js-beta').forEach((a) => { a.href = TESTFLIGHT_URL; });
+</script>
 </body>
 </html>
