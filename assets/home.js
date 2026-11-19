@@ -27,17 +27,23 @@
   function mm(m) { var x = Math.round(m) % 60; return x < 10 ? '0' + x : '' + x; }
   // 10:38 (the now tab), 10:38 am, 2 pm
   function tab(m) { return h12(m) + ':' + mm(m); }
-  function clock(m) { return h12(m) + ':' + mm(m) + ' ' + ampm(m); }
-  function short(m) { return Math.round(m) % 60 === 0 ? h12(m) + ' ' + ampm(m) : clock(m); }
-  function range(a, b) { return clock(a).replace(' ' + ampm(a), ampm(a) === ampm(b) ? '' : ' ' + ampm(a)) + ' – ' + clock(b); }
+  function clock(m) { return h12(m) + ':' + mm(m) + '\u00a0' + ampm(m); }
+  function short(m) { return Math.round(m) % 60 === 0 ? h12(m) + '\u00a0' + ampm(m) : clock(m); }
+  function range(a, b) { return clock(a).replace('\u00a0' + ampm(a), ampm(a) === ampm(b) ? '' : '\u00a0' + ampm(a)) + '\u00a0– ' + clock(b); }
+  // 11 am – 2 pm
+  function span(a, b) { return short(a) + '\u00a0– ' + short(b); }
   // Countdowns round up, so it never says "0 min".
   function countdown(mins) {
     var m = Math.max(1, Math.ceil(mins - 1e-9));
-    if (m < 60) return m + ' min';
+    if (m < 60) return m + '\u00a0min';
     var h = Math.floor(m / 60), r = m % 60;
-    return h + ' h' + (r ? ' ' + r + ' min' : '');
+    return h + '\u00a0h' + (r ? ' ' + r + '\u00a0min' : '');
   }
-  function spoken(mins) { return countdown(mins).replace(' h', ' hours').replace(' min', ' minutes').replace(/^1 hours/, '1 hour'); }
+  function spoken(mins) {
+    var m = Math.max(1, Math.ceil(mins - 1e-9)), h = Math.floor(m / 60), r = m % 60;
+    function u(n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); }
+    return h ? u(h, 'hour') + (r ? ' ' + u(r, 'minute') : '') : u(r, 'minute');
+  }
   function dateOf(i) { return new Date(DAY0.getFullYear(), DAY0.getMonth(), DAY0.getDate() + i); }
   function dayName(i) { return WD[(i % 7 + 7) % 7]; }
 
@@ -118,15 +124,16 @@
         var sub = 'Then you’re done for the day';
         if (next) {
           var gap = next.start - c.end;
+          var sam = WEEK[d].sam, ov = sam ? Math.max(0, Math.min(sam[1], next.start) - Math.max(sam[0], c.end)) : 0;
           sub = gap >= 15
-            ? 'Then ' + countdown(gap) + ' free' + (samFree(d, c.end) ? ' with Sam' : '') + ' · ' + next.code + ' at ' + short(next.start)
+            ? 'Then ' + countdown(gap) + ' free' + (ov ? ', ' + (ov >= gap ? 'all' : countdown(ov)) + ' with Sam' : '') + ' · ' + next.code + ' at ' + short(next.start)
             : 'Then ' + next.code + ' ' + next.act + ' · ' + next.room;
         }
         return { a: codeSpan(c) + ' <span class="d">ends in</span> ' + countdown(c.end - t), s: sub };
       }
       if (t < c.start) {
         if (i === 0) return { a: codeSpan(c) + ' <span class="d">in</span> ' + countdown(c.start - t), s: c.act + ' · ' + c.room };
-        return { a: '<span class="d">Free for</span> ' + countdown(c.start - t), s: (samFree(d, t) ? 'Sam is free too · ' : '') + c.code + ' at ' + short(c.start) };
+        return { a: '<span class="d">Free for</span> ' + countdown(c.start - t), s: (samFree(d, t) ? 'Sam is free until ' + short(WEEK[d].sam[1]) + ' · ' : '') + c.code + ' at ' + short(c.start) };
       }
     }
     return { a: '<span class="d">Done for</span> today', s: '<span class="u">Quiz 2</span> due tonight · MATH1013 at 12 pm tomorrow' };
@@ -163,7 +170,7 @@
       '<div class="dt-in"><div class="dt-rule"></div>' +
       '<div class="when" data-when>' + range(c.start, c.end) + ' · ' + countdown(c.end - c.start) + '</div>' +
       '<div class="where">' + esc(c.place) + '<small>' + esc(NAMES[c.code]) + '</small></div>' +
-      (c.friends.length ? '<div class="with"><span class="av h5" style="--s:22px">ST</span>Sam is in this class too</div>' : '') +
+      (c.friends.length ? '<div class="with"><span class="av h5" style="--s:22px" aria-hidden="true">ST</span>Sam is in this class too</div>' : '') +
       '<div class="acts"><a class="ghost" href="#rooms">' + icon('rooms') + 'Free rooms nearby</a></div></div>';
     return '<div class="piece" data-id="' + c.id + '">' +
       '<div class="tlabel">' + tab(c.start) + '<small>' + ampm(c.start) + '</small></div>' +
@@ -174,19 +181,19 @@
       '<span class="left-tag" aria-hidden="true"></span>' +
       '<button class="hit" type="button" aria-expanded="false" aria-controls="dt-' + c.id + '"></button>' +
       '<div class="body"></div>' +
-      '<div class="dt" id="dt-' + c.id + '" role="region" aria-label="' + c.code + ' details">' + detail + '</div>' +
+      '<div class="dt" id="dt-' + c.id + '" role="region" aria-label="' + c.code + ' details" inert>' + detail + '</div>' +
       '</div></div>';
   }
 
-  function brk(side) {
+  function brk(side, open) {
     var p = 'M2 6.5L8 2.5M2 11.5L8 7.5';
-    return '<svg class="brk ' + side + '" viewBox="0 0 10 14" aria-hidden="true"><path class="bg" d="' + p + '"/><path class="fg" d="' + p + '"/></svg>';
+    return '<svg class="brk ' + side + '" viewBox="0 0 10 14" aria-hidden="true"' + (open ? ' style="--fold:0"' : '') + '><path class="bg" d="' + p + '"/><path class="fg" d="' + p + '"/></svg>';
   }
 
   function pleatHTML(p, d) {
     var len = p.end - p.start, foldable = len > PLEAT_OVER, sam = WEEK[d].sam;
     var shared = sam && sam[0] < p.end && sam[1] > p.start ? [Math.max(sam[0], p.start), Math.min(sam[1], p.end)] : null;
-    var t2 = range(p.start, p.end) + (shared ? ' · Sam is free too' : '');
+    var t2 = span(p.start, p.end) + (shared ? ' · Sam is free too' : '');
     var marks = '';
     for (var h = Math.floor(p.start / 60) + 1; h * 60 < p.end; h++) marks += '<span style="top:' + Math.round((h * 60 - p.start) * PX) + 'px">' + short(h * 60) + '</span>';
     var label = spoken(len) + ' free, ' + short(p.start) + ' to ' + short(p.end) + (shared ? ', Sam is free too' : '');
@@ -195,19 +202,19 @@
       '<div class="pleat' + (foldable ? '' : ' fixed') + (len < 75 ? ' short' : '') + (open ? ' unfolded' : '') + '" style="height:' + pleatH(p) + 'px;--open:' + (open ? 1 : 0) + '">' +
       (shared ? '<div class="shared" style="--s0:' + ((shared[0] - p.start) / len * 100) + '%;--s1:' + ((p.end - shared[1]) / len * 100) + '%"></div>' : '') +
       '<div class="edge"></div>' +
-      (foldable ? '<div class="marks">' + marks + '</div>' : '') +
-      '<div class="txt"><div class="t1">' + countdown(len) + ' free</div><div class="t2">' + t2 + '</div></div>' +
-      (shared ? '<span class="av h5 free" style="--ring:var(--ground)">ST</span>' : '') +
+      (foldable ? '<div class="marks" aria-hidden="true">' + marks + '</div>' : '') +
+      '<div class="txt" aria-hidden="true"><div class="t1">' + countdown(len) + ' free</div><div class="t2">' + t2 + '</div></div>' +
+      (shared ? '<span class="av h5 free" style="--ring:var(--ground)" aria-hidden="true">ST</span>' : '') +
       (foldable ? '<button class="hit" type="button" aria-expanded="' + !!open + '" aria-label="' + label + '"></button>' +
         '<a class="ghost rooms" href="#rooms" tabindex="' + (open ? 0 : -1) + '">' + icon('rooms') + 'Free rooms nearby</a>' : '<span class="sr">' + label + '</span>') +
-      '</div>' + (foldable ? brk('l') + brk('r') : '') + '</div>';
+      '</div>' + (foldable ? brk('l', open) + brk('r', open) : '') + '</div>';
   }
 
   function renderDay(dir) {
     var d = S.day, ps = pieces(d), cl = WEEK[d].classes;
     var html = '<div class="day' + (dir ? ' enter' + (dir < 0 ? ' back' : '') : '') + '"><div class="track">' +
       ps.map(function (p) { return p.free ? pleatHTML(p, d) : slabHTML(p, d); }).join('') +
-      '</div><div class="day-end">Done at ' + clock(cl[cl.length - 1].end) + '</div></div>';
+      '</div><div class="day-end">Done at ' + short(cl[cl.length - 1].end) + '</div></div>';
     els.day.innerHTML = html;
     els.dayEl = els.day.firstChild;
     els.track = $('.track', els.dayEl);
@@ -224,7 +231,15 @@
       for (var i = 0; i < cl.length; i++) if (t < cl[i].end) { live = cl[i]; break; }
     }
     var nowHost = null, nowTop = null, nowPct = null;
-    Object.keys(els.pieces).forEach(function (id) {
+    // The now tab sits in the time column: hide a start label it would cover (as the app does).
+    var ids = Object.keys(els.pieces), hideLabel = null;
+    if (d === TODAY) ids.forEach(function (id, i) {
+      var p = els.pieces[id].p;
+      if (t < p.start || t >= p.end) return;
+      if (!p.free && (t - p.start) / (p.end - p.start) * slabH(p) < 46) hideLabel = id;
+      if (p.free && ids[i + 1] && (1 - (t - p.start) / (p.end - p.start)) * pleatH(p) < 30) hideLabel = ids[i + 1];
+    });
+    ids.forEach(function (id) {
       var item = els.pieces[id], p = item.p, el = item.el;
       var past = d < TODAY || (d === TODAY && t >= p.end);
       var happening = d === TODAY && t >= p.start && t < p.end;
@@ -237,9 +252,18 @@
       slab.style.setProperty('--sp', sp.toFixed(1) + 'px');
       slab.classList.toggle('past', past);
       slab.classList.toggle('live', p === live);
-      el.querySelector('.tlabel').classList.toggle('past', past);
+      var lbl = el.querySelector('.tlabel');
+      lbl.classList.toggle('past', past);
+      lbl.classList.toggle('hide', id === hideLabel);
       var tag = el.querySelector('.left-tag');
-      if (happening && bh - sp >= 18) { tag.textContent = countdown(p.end - t) + ' left'; tag.style.top = (sp + 3) + 'px'; tag.hidden = false; } else tag.hidden = true;
+      if (happening) {
+        // What's left sits in the part that's left; near the end it moves up beside the code.
+        var below = bh - sp >= 18;
+        tag.textContent = countdown(p.end - t) + ' left';
+        tag.style.top = below ? (sp + 3) + 'px' : '9px';
+        tag.classList.toggle('top', !below);
+        tag.hidden = false;
+      } else tag.hidden = true;
       if (happening) { nowHost = el; nowTop = sp; }
       var label = p.code + ' ' + p.act + ', ' + short(p.start) + ' to ' + short(p.end) + ', ' + p.place +
         (happening ? ', ends in ' + spoken(p.end - t) : past ? ', finished' : d === TODAY ? ', starts in ' + spoken(p.start - t) : '');
@@ -274,7 +298,7 @@
     dt.style.height = open ? h + 'px' : '0px';
     slab.classList.toggle('open', open);
     hit.setAttribute('aria-expanded', String(open));
-    dt.querySelectorAll('a,button').forEach(function (a) { a.tabIndex = open ? 0 : -1; });
+    dt.inert = !open;
     if (instant) { dt.offsetHeight; dt.style.transition = ''; }
   }
 
@@ -362,8 +386,8 @@
         '<span class="ti" aria-hidden="true">' + (lv === 'later' ? esc(x.title) : '<b>' + esc(x.title) + '</b>') + '<span class="c">' + x.code + '</span></span>' +
         '<span class="w ' + lv + '" aria-hidden="true">' + w + '</span></div>';
     }
-    var html = '<div role="list" aria-label="Deadlines">' + urgent.map(row).join('') + '</div>' +
-      (soon.length ? '<h4>Due soon</h4><div role="list" aria-label="Due soon">' + soon.map(row).join('') + '</div>' : '');
+    var html = (urgent.length ? '<div role="list" aria-label="Due within a day">' + urgent.map(row).join('') + '</div>' : '') +
+      (soon.length ? '<div class="stakes-h" aria-hidden="true">Due soon</div><div role="list" aria-label="Due soon">' + soon.map(row).join('') + '</div>' : '');
     if (els.stakes.innerHTML !== html) els.stakes.innerHTML = html;
   }
 
@@ -478,7 +502,7 @@
           c.code + ' ' + c.act + ', ' + WD_LONG[d] + ' ' + short(c.start) + ' to ' + short(c.end) + '. Open on the day">' +
           '<i class="spent"></i>' + ['s', 'a'].map(function (layer) {
             return '<span class="wt ' + layer + '"' + (layer === 's' ? ' aria-hidden="true"' : '') + '><span class="cl">' + c.code.slice(0, 4) + '</span><span class="cn">' + c.code.slice(4) + '</span>' +
-              (c.end - c.start >= 120 ? '<span class="ca">' + esc(c.act) + '</span>' : '') + '</span>';
+              (c.end - c.start >= 120 ? '<span class="ca">' + esc(c.act === 'Computer lab' ? 'Lab' : c.act) + '</span>' : '') + '</span>';
           }).join('') + '</button>';
       });
       if (d === TODAY) html += '<div class="wnow" aria-hidden="true"></div>';
@@ -598,7 +622,7 @@
   ];
   function roomsMoment() {
     if (S.roomsWhen === 'tomorrow') return { day: 1, t: hm(9) };
-    return { day: 0, t: Math.min(hm(18), S.t + (S.roomsWhen === 'hour' ? 60 : 0)) };
+    return { day: 0, t: S.t + (S.roomsWhen === 'hour' ? 60 : 0) };
   }
   function freeUntil(room, mo) {
     var busy = room.days[mo.day];
@@ -606,6 +630,13 @@
     var next = busy.filter(function (b) { return b[0] > mo.t; })[0];
     return next ? next[0] : hm(18);
   }
+  // The rooms a search is about: all of a building's when its name matches, otherwise the matching rooms.
+  function roomsIn(b) {
+    var q = S.roomsQ.trim().toLowerCase();
+    if (!q || b.name.toLowerCase().indexOf(q) >= 0) return b.rooms;
+    return b.rooms.filter(function (r) { return r.name.toLowerCase().indexOf(q) >= 0; });
+  }
+  function freeCount(b, mo) { return roomsIn(b).filter(function (r) { return freeUntil(r, mo) != null; }).length; }
   function roomsMatches() {
     var q = S.roomsQ.trim().toLowerCase();
     return BUILDINGS.filter(function (b) {
@@ -614,10 +645,10 @@
   }
   function renderRooms() {
     els.roomsWhen.innerHTML = WHEN.map(function (w) {
-      return '<button type="button" class="chip" role="radio" data-w="' + w.id + '" aria-checked="' + (S.roomsWhen === w.id) + '">' + w.label + '</button>';
+      return '<button type="button" class="chip" role="radio" data-w="' + w.id + '" aria-checked="' + (S.roomsWhen === w.id) + '" tabindex="' + (S.roomsWhen === w.id ? 0 : -1) + '">' + w.label + '</button>';
     }).join('');
     var mo = roomsMoment(), list = roomsMatches();
-    list = list.map(function (b) { return { b: b, free: b.rooms.filter(function (r) { return freeUntil(r, mo) != null; }).length }; })
+    list = list.map(function (b) { return { b: b, free: freeCount(b, mo) }; })
       .sort(function (x, y) { return y.free - x.free; });
     var extra = S.roomsAll || S.roomsQ ? 0 : Math.max(0, list.length - 6);
     if (extra) list = list.slice(0, 6);
@@ -625,16 +656,15 @@
       var id = 'bld-' + BUILDINGS.indexOf(x.b), open = !!S.roomsOpen[x.b.name];
       return '<div class="bld" data-b="' + BUILDINGS.indexOf(x.b) + '"' + (open ? ' data-open' : '') + '>' +
         '<button type="button" aria-expanded="' + open + '" aria-controls="' + id + '">' +
-        '<span class="big" data-free>' + x.free + '<small>of ' + x.b.rooms.length + '</small></span>' +
+        '<span class="big" data-free>' + x.free + '<small>of ' + roomsIn(x.b).length + '</small></span>' +
         '<span class="nm">' + esc(x.b.name) + '<small>Up to ' + x.b.max + ' seats</small></span>' +
         '<svg class="icon chev" aria-hidden="true"><use href="#i-chev"/></svg></button>' +
-        '<div class="rooms-list" id="' + id + '" style="height:' + (open ? 'auto' : '0') + '"><div class="rooms-in" data-rooms-in></div></div></div>';
+        '<div class="rooms-list" id="' + id + '" style="height:' + (open ? 'auto' : '0') + '"' + (open ? '' : ' inert') + '><div class="rooms-in" data-rooms-in></div></div></div>';
     }).join('') + (extra ? '<button type="button" class="more" data-more>Show ' + extra + ' more buildings</button>' : '') : '<div class="empty">No rooms or buildings match “' + esc(S.roomsQ) + '”.</div>';
     tickRooms();
   }
   function roomsHTML(b, mo) {
-    var q = S.roomsQ.trim().toLowerCase(), nameHit = !q || b.name.toLowerCase().indexOf(q) >= 0;
-    var rooms = b.rooms.filter(function (r) { return nameHit || r.name.toLowerCase().indexOf(q) >= 0; })
+    var rooms = roomsIn(b)
       .map(function (r) { return { r: r, until: freeUntil(r, mo) }; })
       .sort(function (x, y) { return (y.until == null ? -1 : y.until) - (x.until == null ? -1 : x.until); });
     var shown = rooms.slice(0, 5), span = END - START;
@@ -646,8 +676,8 @@
         prev = bk[1];
       });
       if (prev < END) strip += '<i class="fr" style="left:' + ((prev - START) / span * 100) + '%;width:' + ((END - prev) / span * 100) + '%"></i>';
-      strip += '<i class="sn" style="left:' + ((mo.t - START) / span * 100) + '%"></i>';
-      var until = x.until == null ? 'Booked' : x.until >= hm(18) ? 'Free all day' : 'Free until ' + short(x.until);
+      if (mo.t < END) strip += '<i class="sn" style="left:' + ((mo.t - START) / span * 100) + '%"></i>';
+      var until = x.until == null ? 'Booked' : x.until >= hm(18) ? (mo.t >= hm(17) ? 'Free tonight' : 'Free rest of day') : 'Free until ' + short(x.until);
       return '<div class="room"><span><b>' + (b.name === 'Chifley Library' ? 'Study room ' : 'Room ') + x.r.num + '</b> · ' + x.r.seats + ' seats</span><span class="until' + (x.until == null ? ' no' : '') + '">' + until + '</span>' +
         '<span class="strip" aria-hidden="true">' + strip + '</span></div>';
     }).join('') + (rooms.length > 5 ? '<div class="fine">and ' + (rooms.length - 5) + ' more</div>' : '');
@@ -655,11 +685,11 @@
   function tickRooms() {
     var mo = roomsMoment(), list = roomsMatches(), total = 0;
     els.roomsList.querySelectorAll('.bld').forEach(function (el) {
-      var b = BUILDINGS[+el.dataset.b], free = b.rooms.filter(function (r) { return freeUntil(r, mo) != null; }).length;
-      el.querySelector('[data-free]').firstChild.nodeValue = free;
+      var b = BUILDINGS[+el.dataset.b];
+      el.querySelector('[data-free]').firstChild.nodeValue = freeCount(b, mo);
       if (el.hasAttribute('data-open')) el.querySelector('[data-rooms-in]').innerHTML = roomsHTML(b, mo);
     });
-    list.forEach(function (b) { total += b.rooms.filter(function (r) { return freeUntil(r, mo) != null; }).length; });
+    list.forEach(function (b) { total += freeCount(b, mo); });
     els.roomsAnswer.innerHTML = total + ' free <span class="d">in ' + list.length + ' building' + (list.length === 1 ? '' : 's') + '</span>';
     els.roomsSub.textContent = S.roomsWhen === 'tomorrow' ? 'At 9 am tomorrow · Thu 19 Nov' : 'At ' + clock(mo.t) + ' · Wed 18 Nov';
   }
@@ -676,6 +706,7 @@
     list.offsetHeight;
     list.style.height = (open ? h : 0) + 'px';
     if (!open) el.removeAttribute('data-open');
+    list.inert = !open;
     btn.setAttribute('aria-expanded', String(open));
     list.addEventListener('transitionend', function done(e) {
       if (e.propertyName !== 'height') return;
@@ -732,18 +763,22 @@
     $('.anow', els.frAxis).style.left = pct(Math.max(START, Math.min(END, t)));
     var cur = ws.filter(function (w) { return t >= w[0] && t < w[1]; })[0], next = ws.filter(function (w) { return w[0] > t; })[0];
     var names = ps.map(function (p) { return p.name; }), who = names.length === 2 ? names.join(' and ') : names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1];
-    var a;
-    if (cur) a = '<span class="d">Free together until</span> ' + short(cur[1]);
-    else if (next) a = '<span class="d">Free together</span> ' + short(next[0]) + ' – ' + short(next[1]);
-    else a = '<span class="d">No more free time together</span> today';
+    var a, sub;
+    if (ps.length === 1) { a = 'Pick a friend <span class="d">to compare</span>'; sub = 'Your free time is hatched'; }
+    else {
+      if (cur) a = '<span class="d">Free together until</span> ' + short(cur[1]);
+      else if (next) a = '<span class="d">Free together</span> ' + span(next[0], next[1]);
+      else a = '<span class="d">No more free time together</span> today';
+      sub = who + (ws.length > 1 ? ' · free together ' + ws.length + ' times today' : '');
+    }
     els.frAnswer.innerHTML = a;
-    els.frSub.textContent = ps.length === 1 ? 'Pick a friend' : who + (ws.length > 1 ? ' · ' + ws.length + ' gaps today' : '');
+    els.frSub.textContent = sub;
   }
 
   function renderSeen() {
     var opts = [['none', 'Nothing'], ['busy', 'Busy times'], ['full', 'Everything']];
     els.seenSeg.innerHTML = '<span class="thumb" aria-hidden="true"></span>' + opts.map(function (o) {
-      return '<button type="button" role="radio" data-v="' + o[0] + '" aria-checked="' + (S.seen === o[0]) + '">' + o[1] + '</button>';
+      return '<button type="button" role="radio" data-v="' + o[0] + '" aria-checked="' + (S.seen === o[0]) + '" tabindex="' + (S.seen === o[0] ? 0 : -1) + '">' + o[1] + '</button>';
     }).join('');
     var from = hm(9), span = hm(16) - from;
     els.seen.innerHTML = WEEK[TODAY].classes.map(function (c) {
@@ -758,7 +793,7 @@
     var thumb = $('.thumb', els.seenSeg);
     thumb.style.width = 'calc((100% - 6px) / 3)';
     thumb.style.transform = 'translateX(' + i * 100 + '%)';
-    els.seenSeg.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-checked', String(b.dataset.v === S.seen)); });
+    els.seenSeg.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-checked', String(b.dataset.v === S.seen)); b.tabIndex = b.dataset.v === S.seen ? 0 : -1; });
     var label = { none: 'Sam sees nothing of your timetable', busy: 'Sam sees grey blocks when you are busy, without what or where', full: 'Sam sees your classes' }[S.seen];
     els.seen.setAttribute('aria-label', label);
     els.seen.setAttribute('role', 'img');
@@ -841,7 +876,7 @@
       if (!b) return;
       setDay(+b.dataset.d, b.dataset.id);
       var demo = $('#today-demo');
-      demo.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'center' });
+      demo.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'start' });
       var hit = els.pieces[b.dataset.id] && els.pieces[b.dataset.id].el.querySelector('.hit');
       if (hit) hit.focus({ preventScroll: true });
     });
@@ -902,11 +937,12 @@
     // Arrow keys move through radio-style groups.
     [els.seenSeg, els.roomsWhen].forEach(function (g) {
       g.addEventListener('keydown', function (e) {
-        if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+        var step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+        if (!step && e.key !== 'Home' && e.key !== 'End') return;
         var bs = [].slice.call(g.querySelectorAll('[role=radio]')), i = bs.indexOf(document.activeElement);
         if (i < 0) return;
         e.preventDefault();
-        var n = bs[(i + (e.key === 'ArrowRight' ? 1 : bs.length - 1)) % bs.length];
+        var n = e.key === 'Home' ? bs[0] : e.key === 'End' ? bs[bs.length - 1] : bs[(i + step + bs.length) % bs.length];
         n.click();
         var again = g.querySelector('[data-v="' + n.dataset.v + '"],[data-w="' + n.dataset.w + '"]');
         (again || n).focus();

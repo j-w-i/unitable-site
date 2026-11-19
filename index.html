@@ -10,6 +10,10 @@
 <meta property="og:image" content="https://unitable.net/og.png">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://unitable.net/">
+<meta property="og:image:alt" content="Unitable's Today screen: COMP1100 ends in 20 min, with the day as a track of classes and free time">
+<meta property="og:site_name" content="Unitable">
+<meta property="og:locale" content="en_AU">
+<link rel="canonical" href="https://unitable.net/">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0e0f11">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
@@ -81,7 +85,7 @@
       <svg class="icon moon"><use href="#i-moon"/></svg>
       <svg class="icon sun"><use href="#i-sun"/></svg>
     </button>
-    <a class="btn small js-beta" href="mailto:hello@unitable.net?subject=Unitable%20beta">Get the beta</a>
+    <a class="btn small js-beta" href="mailto:hello@unitable.net?subject=Unitable%20beta" data-live="Get the beta">Get an invite</a>
   </div>
 </header>
 
@@ -94,7 +98,7 @@
       <h1 id="hero-title" class="rise" style="--i:1"><span class="dim">Your uni day,</span><br>answered.</h1>
       <p class="lead rise" style="--i:2">Your timetable, Canvas due dates, free rooms and when your friends are free, in one app. Connect once and it keeps itself up to date.</p>
       <div class="cta rise" style="--i:3">
-        <a class="btn js-beta" href="mailto:hello@unitable.net?subject=Unitable%20beta">Get the beta on TestFlight</a>
+        <a class="btn js-beta" href="mailto:hello@unitable.net?subject=Unitable%20beta" data-live="Get the beta on TestFlight">Ask for a beta invite</a>
         <a class="ghost big" href="#features">See what it does</a>
       </div>
       <p class="note rise" style="--i:4">Free, with no ads. Android is coming later.</p>
@@ -150,7 +154,7 @@
       <p class="sub">Open Unitable and the top line already says what you need: what's on, how long is left, and what's after. It changes as the day does, so you never read a timetable to work it out.</p>
       <ul class="points">
         <li>Time you've used up turns grey under a moving line</li>
-        <li>The class you're in is the only one in full colour</li>
+        <li>Only the class that's on now, or next, is in full colour</li>
         <li>Tap a class to open it in place; tap free time to unfold it</li>
       </ul>
     </div>
@@ -303,7 +307,7 @@
       <details><summary>Which universities does it work with?<svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg></summary><p>ANU for now. Unitable is built so other universities can be added, so tell us if you'd like yours next.</p></details>
       <details><summary>Is it made by ANU?<svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg></summary><p>No. Unitable is an independent app made by an ANU student. It isn't affiliated with or endorsed by the Australian National University.</p></details>
       <details><summary>How does it get my timetable?<svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg></summary><p>MyTimetable and Canvas both give every student a private calendar link. You sign in once inside Unitable, it finds those links, and it checks them for changes from then on.</p></details>
-      <details><summary>How do I join the beta?<svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg></summary><p>Unitable is on TestFlight, Apple's app for trying apps before they're on the App Store. Tap "Get the beta", install TestFlight, then install Unitable from it.</p></details>
+      <details><summary>How do I join the beta?<svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg></summary><p>Unitable is on TestFlight, Apple's app for trying apps before they're on the App Store. Ask for an invite and we'll email you a TestFlight link. Install TestFlight, then install Unitable from it.</p></details>
       <details><summary>Is there an Android version?<svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg></summary><p>It's coming. The beta is iPhone first.</p></details>
       <details><summary>What does it cost?<svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg></summary><p>Nothing.</p></details>
     </div>
@@ -315,7 +319,7 @@
     <h2 id="closing-title"><span class="dim">Your uni day,</span> answered.</h2>
     <p class="sub">Free for ANU students on iPhone.</p>
     <div class="cta">
-      <a class="btn js-beta" href="mailto:hello@unitable.net?subject=Unitable%20beta">Get the beta on TestFlight</a>
+      <a class="btn js-beta" href="mailto:hello@unitable.net?subject=Unitable%20beta" data-live="Get the beta on TestFlight">Ask for a beta invite</a>
     </div>
   </div>
 </section>
@@ -339,7 +343,7 @@
   // The public TestFlight link, once Apple approves the beta. Until then the
   // buttons open an email so people can still ask for an invite.
   const TESTFLIGHT_URL = '';
-  if (TESTFLIGHT_URL) document.querySelectorAll('.js-beta').forEach((a) => { a.href = TESTFLIGHT_URL; });
+  if (TESTFLIGHT_URL) document.querySelectorAll('.js-beta').forEach((a) => { a.href = TESTFLIGHT_URL; a.textContent = a.dataset.live; });
 </script>
 </body>
 </html>
