@@ -2,36 +2,51 @@
 <html lang="en-AU">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Unitable privacy policy</title>
 <meta name="description" content="What Unitable collects, why, who it's shared with, and how to delete it.">
-<style>
-  :root { --bg: #F4F4F1; --text: #18181B; --muted: #5F5F66; --line: #DDDDD8; --link: #2563EB; }
-  @media (prefers-color-scheme: dark) { :root { --bg: #0E0E10; --text: #F2F2F3; --muted: #A1A1AA; --line: #2A2A2E; --link: #7AA2FF; } }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif; }
-  main { max-width: 680px; margin: 0 auto; padding: 48px 16px 80px; }
-  h1 { font-size: 34px; line-height: 1.15; margin: 0 0 6px; }
-  h2 { font-size: 21px; margin: 40px 0 8px; }
-  p, li { color: var(--text); }
-  .muted { color: var(--muted); }
-  ul { padding-left: 22px; }
-  li { margin: 4px 0; }
-  a { color: var(--link); }
-  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 15px; }
-  th, td { text-align: left; vertical-align: top; padding: 10px 8px 10px 0; border-bottom: 1px solid var(--line); }
-  th { font-weight: 600; }
-</style>
+<meta name="theme-color" content="#0e0f11">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<script>
+  (function () {
+    var d = document.documentElement, q = /[?&]theme=(light|dark)\b/.exec(location.search), t = q && q[1];
+    d.classList.add('js');
+    try { t = t || localStorage.getItem('unitable-theme'); } catch (e) {}
+    if (t === 'light') { d.dataset.theme = 'light'; document.querySelector('meta[name=theme-color]').content = '#f8f9fa'; }
+  })();
+</script>
+<link rel="stylesheet" href="/assets/site.css">
+<script src="/assets/theme.js" defer></script>
 </head>
 <body>
-<main>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></symbol>
+</svg>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="/" aria-label="Unitable home">
+      <svg viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="8" fill="var(--track)"/><rect x="5" y="4.5" width="20" height="7" rx="2.5" fill="var(--spent)"/><rect x="5" y="13.5" width="20" height="5" rx="2.5" fill="var(--h0-solid)"/><rect x="5" y="20.5" width="20" height="5" rx="2.5" fill="var(--h3-fill)"/><rect x="2.5" y="12.4" width="25" height="1.8" rx=".9" fill="var(--ink)"/></svg>
+      Unitable
+    </a>
+    <button class="theme-btn" type="button" data-theme-toggle aria-label="Use light appearance">
+      <svg class="icon moon"><use href="#i-moon"/></svg>
+      <svg class="icon sun"><use href="#i-sun"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="main" class="doc">
 <h1>Privacy policy</h1>
-<p class="muted">Unitable · last updated 19 November 2026</p>
+<p class="meta">Unitable · last updated 19 November 2026</p>
 
 <p>Unitable shows your uni timetable, due dates, free rooms and friends' free time in one app. This page explains what it stores, why, who helps run it, and how to delete everything. Unitable is run by an individual student developer in Australia and follows the Australian Privacy Principles.</p>
 
 <h2>The short version</h2>
-<ul>
+<ul class="summary">
   <li>We only store what the app needs to work. No ads, no tracking, no analytics, and we never sell data.</li>
   <li>We never see or store your uni password. You sign in to MyTimetable and Canvas on your uni's own pages.</li>
   <li>Your private calendar links are encrypted and never shown again, even to you.</li>
@@ -57,10 +72,10 @@
 
 <h2>Who helps run Unitable</h2>
 <ul>
-  <li><strong>Supabase</strong> hosts the database and servers, in Sydney, Australia.</li>
-  <li><strong>Expo</strong> builds the app and passes notifications to Apple.</li>
-  <li><strong>Apple</strong> delivers notifications to your iPhone and runs TestFlight and the App Store.</li>
-  <li><strong>Resend</strong> sends the sign-in code emails.</li>
+  <li><span><strong>Supabase</strong> hosts the database and servers, in Sydney, Australia.</span></li>
+  <li><span><strong>Expo</strong> builds the app and passes notifications to Apple.</span></li>
+  <li><span><strong>Apple</strong> delivers notifications to your iPhone and runs TestFlight and the App Store.</span></li>
+  <li><span><strong>Resend</strong> sends the sign-in code emails.</span></li>
 </ul>
 <p>They only get what they need to do that job. We don't share your information with anyone else unless the law requires it.</p>
 
@@ -83,5 +98,18 @@
 <h2>Changes</h2>
 <p>If this policy changes in a way that matters, we'll say so in the app before it takes effect.</p>
 </main>
+
+<footer>
+  <div class="wrap">
+    <span class="grow">© 2026 Unitable. Not affiliated with the Australian National University.</span>
+    <a href="/">Home</a>
+    <a href="/bot/">For uni IT</a>
+    <a href="mailto:hello@unitable.net">hello@unitable.net</a>
+    <span class="theme-seg" role="group" aria-label="Appearance (dark is recommended)">
+      <button type="button" data-theme-set="dark" aria-pressed="true">Dark</button>
+      <button type="button" data-theme-set="light" aria-pressed="false">Light</button>
+    </span>
+  </div>
+</footer>
 </body>
 </html>

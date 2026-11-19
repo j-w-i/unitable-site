@@ -7,286 +7,320 @@
 <meta name="description" content="Your ANU timetable, Canvas due dates, free rooms and friends' free time in one app, kept up to date automatically. Free beta on TestFlight.">
 <meta property="og:title" content="Unitable: your uni day, answered">
 <meta property="og:description" content="Timetable, due dates, free rooms and friends, in one app. For ANU students.">
-<meta property="og:image" content="https://unitable.net/img/today.jpg">
-<meta name="theme-color" content="#F4F4F1" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0E0E10" media="(prefers-color-scheme: dark)">
+<meta property="og:image" content="https://unitable.net/og.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://unitable.net/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0e0f11">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<style>
-  :root {
-    --bg: #F4F4F1; --surface: #FFFFFF; --ink: #18181B; --muted: #5F5F66; --faint: #8E8E93; --line: #E3E3DE;
-    --blue: #0A64D6; --orange: #B25E00; --green: #1E8E3E; --red: #D6204B; --purple: #6E4FD8;
-    --phone: #0B0B0D; --radius: 22px;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg: #0E0E10; --surface: #1A1A1E; --ink: #F2F2F3; --muted: #A1A1AA; --faint: #7A7A82; --line: #2A2A2E;
-      --blue: #4C9BFF; --orange: #FFA94D; --green: #4ADE80; --red: #FF6B8A; --purple: #A996FF; }
-    /* The phone's black frame needs an edge to show against a dark page. */
-    .phone { box-shadow: 0 30px 60px rgba(0,0,0,0.5), 0 0 0 1.5px rgba(255,255,255,0.14); }
-  }
-  * { box-sizing: border-box; }
-  html { -webkit-text-size-adjust: 100%; }
-  body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, system-ui, sans-serif; }
-  a { color: var(--blue); text-decoration: none; }
-  a:hover { text-decoration: underline; }
-  img { display: block; max-width: 100%; }
-  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
-  @media (min-width: 720px) { .wrap { padding: 0 32px; } }
-
-  /* Nav */
-  nav { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: saturate(1.6) blur(18px); -webkit-backdrop-filter: saturate(1.6) blur(18px); border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent); }
-  nav .wrap { display: flex; align-items: center; gap: 12px; height: 60px; }
-  .brand { display: flex; align-items: center; gap: 10px; color: var(--ink); font-weight: 700; font-size: 19px; }
-  .brand:hover { text-decoration: none; }
-  .brand img { width: 32px; height: 32px; border-radius: 8px; box-shadow: 0 0 0 1px var(--line); }
-  nav .links { margin-left: auto; display: flex; align-items: center; gap: 22px; font-size: 15px; }
-  nav .links a.plain { color: var(--muted); }
-  @media (max-width: 640px) { nav .links a.plain { display: none; } }
-
-  .button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 22px; border-radius: 999px; font-weight: 600; font-size: 17px; background: var(--blue); color: #fff; }
-  .button:hover { text-decoration: none; filter: brightness(1.06); }
-  .button.small { min-height: 36px; padding: 0 16px; font-size: 15px; }
-  .button.ghost { background: var(--surface); color: var(--ink); box-shadow: 0 0 0 1px var(--line) inset; }
-
-  /* Phone */
-  .phone { width: var(--w, 300px); max-width: 100%; aspect-ratio: 1206 / 2622; padding: calc(var(--w, 300px) * 0.034); border-radius: calc(var(--w, 300px) * 0.17); background: var(--phone); box-shadow: 0 30px 60px rgba(0,0,0,0.16), 0 0 0 1px rgba(255,255,255,0.06) inset; position: relative; box-sizing: content-box; }
-  .phone img { width: 100%; height: 100%; object-fit: cover; border-radius: calc(var(--w, 300px) * 0.138); }
-  /* The screenshots have no Dynamic Island, so draw one where the real island sits (measured from screen recordings). */
-  .phone::after { content: ""; position: absolute; top: calc(var(--w, 300px) * (0.034 + 42 / 1206)); left: calc(var(--w, 300px) * (0.034 + 460 / 1206)); width: calc(var(--w, 300px) * 285 / 1206); height: calc(var(--w, 300px) * 110 / 1206); border-radius: 999px; background: #000; }
-
-  /* Hero */
-  .hero { padding: 56px 0 40px; }
-  .hero .wrap { display: grid; gap: 40px; align-items: center; }
-  @media (min-width: 900px) { .hero { padding: 88px 0 72px; } .hero .wrap { grid-template-columns: 1.15fr 0.85fr; } }
-  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--muted); background: var(--surface); padding: 6px 12px; border-radius: 999px; box-shadow: 0 0 0 1px var(--line) inset; }
-  .eyebrow .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
-  h1 { font-size: clamp(44px, 8vw, 84px); line-height: 1.02; font-weight: 800; margin: 20px 0 18px; }
-  h1 .answer { color: var(--orange); }
-  .lead { font-size: clamp(18px, 2.2vw, 22px); color: var(--muted); max-width: 34em; margin: 0 0 28px; }
-  .cta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
-  .note { font-size: 14px; color: var(--faint); margin-top: 14px; }
-  .hero .shot { display: flex; justify-content: center; --w: min(330px, 74vw); }
-
-  /* Sections */
-  section { padding: 64px 0; }
-  @media (min-width: 900px) { section { padding: 96px 0; } }
-  h2 { font-size: clamp(32px, 5vw, 52px); line-height: 1.06; font-weight: 800; margin: 0 0 16px; }
-  .kicker { font-weight: 700; font-size: 17px; margin-bottom: 10px; }
-  .sub { color: var(--muted); font-size: 19px; max-width: 32em; margin: 0; }
-  .center { text-align: center; }
-  .center .sub { margin: 0 auto; }
-
-  .feature .wrap { display: grid; gap: 36px; align-items: center; }
-  .feature .shot { display: flex; justify-content: center; --w: min(300px, 70vw); }
-  @media (min-width: 900px) {
-    .feature .wrap { grid-template-columns: 1fr 1fr; gap: 72px; }
-    .feature.flip .shot { order: 2; }
-  }
-  .feature ul { list-style: none; padding: 0; margin: 22px 0 0; display: grid; gap: 10px; }
-  .feature li { display: flex; gap: 10px; color: var(--muted); }
-  .feature li::before { content: ""; flex: none; width: 6px; height: 6px; margin-top: 10px; border-radius: 50%; background: currentColor; opacity: 0.6; }
-
-  .band { background: var(--surface); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-
-  /* Video */
-  .video { margin-top: 36px; border-radius: var(--radius); overflow: hidden; background: #000; box-shadow: 0 30px 60px rgba(0,0,0,0.14); aspect-ratio: 16 / 9; }
-  .video video { width: 100%; height: 100%; display: block; }
-
-  /* Steps and grid */
-  .steps { display: grid; gap: 16px; margin-top: 40px; counter-reset: step; }
-  @media (min-width: 800px) { .steps { grid-template-columns: repeat(3, 1fr); } }
-  .card { background: var(--bg); border-radius: var(--radius); padding: 24px; box-shadow: 0 0 0 1px var(--line) inset; }
-  .band .card { background: var(--bg); }
-  .steps .card::before { counter-increment: step; content: counter(step); display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--blue); color: #fff; font-weight: 700; margin-bottom: 14px; }
-  .card h3 { margin: 0 0 6px; font-size: 20px; }
-  .card p { margin: 0; color: var(--muted); }
-  .grid { display: grid; gap: 16px; margin-top: 40px; }
-  @media (min-width: 700px) { .grid { grid-template-columns: repeat(2, 1fr); } }
-  @media (min-width: 1000px) { .grid { grid-template-columns: repeat(3, 1fr); } }
-  .grid .card { background: var(--surface); }
-  .icon { width: 40px; height: 40px; border-radius: 11px; display: grid; place-items: center; margin-bottom: 14px; color: #fff; font-size: 20px; }
-
-  /* FAQ */
-  details { border-bottom: 1px solid var(--line); padding: 18px 0; }
-  summary { cursor: pointer; font-weight: 600; font-size: 19px; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
-  summary::-webkit-details-marker { display: none; }
-  summary::after { content: "+"; color: var(--faint); font-weight: 400; }
-  details[open] summary::after { content: "–"; }
-  details p { color: var(--muted); margin: 10px 0 0; max-width: 46em; }
-  .faq { max-width: 760px; margin: 32px auto 0; }
-
-  footer { padding: 40px 0 56px; color: var(--faint); font-size: 14px; }
-  footer .wrap { display: flex; flex-wrap: wrap; gap: 10px 24px; align-items: center; }
-  footer a { color: var(--muted); }
-  footer .grow { flex: 1; min-width: 200px; }
-</style>
+<script>
+  // Dark is the default; light only if the visitor picked it. Runs before paint, so no flash.
+  (function () {
+    var d = document.documentElement;
+    d.classList.add('js');
+    var q = /[?&]theme=(light|dark)\b/.exec(location.search), t = q && q[1];
+    try { t = t || localStorage.getItem('unitable-theme'); } catch (e) {}
+    if (t === 'light') { d.dataset.theme = 'light'; document.querySelector('meta[name=theme-color]').content = '#f8f9fa'; }
+  })();
+</script>
+<link rel="stylesheet" href="/assets/site.css">
+<script src="/assets/theme.js" defer></script>
+<script src="/assets/home.js" defer></script>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-today" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="16" rx="3.5"/><path d="M3.5 9.5h17M8 3v3M16 3v3M8 13h.01M12 13h.01M16 13h.01M8 16.5h.01M12 16.5h.01"/></symbol>
+  <symbol id="i-due" viewBox="0 0 24 24"><path d="M5.5 21V3.5M5.5 4h12l-2.5 4.5 2.5 4.5h-12"/></symbol>
+  <symbol id="i-rooms" viewBox="0 0 24 24"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></symbol>
+  <symbol id="i-friends" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c.6-3.3 3-5.2 6-5.2s5.4 1.9 6 5.2"/><circle cx="16.8" cy="8.8" r="2.6"/><path d="M15.8 14.1c2.7-.3 4.6 1.3 5.3 4.4"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+  <symbol id="i-assignment" viewBox="0 0 24 24"><path d="M6.5 3h7.5l4 4v14h-11.5z"/><path d="M13.5 3v4.5h4.5M9.5 12.5h5M9.5 16h5"/></symbol>
+  <symbol id="i-quiz" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M9.7 9.6a2.4 2.4 0 0 1 4.6.9c0 1.6-2.3 1.9-2.3 3.5M12 16.8h.01"/></symbol>
+  <symbol id="i-lab" viewBox="0 0 24 24"><path d="M9 3h6M10.2 3v6.2L5.3 18a2 2 0 0 0 1.8 3h9.8a2 2 0 0 0 1.8-3l-4.9-8.8V3M7.6 14.5h8.8"/></symbol>
+  <symbol id="i-homework" viewBox="0 0 24 24"><path d="M5 18.5V5a2 2 0 0 1 2-2h12v14H7a2 2 0 0 0-2 2 2 2 0 0 0 2 2h12"/></symbol>
+  <symbol id="i-exam" viewBox="0 0 24 24"><circle cx="12" cy="9.5" r="6"/><path d="M8.6 14.3 7.3 21l4.7-2.4 4.7 2.4-1.3-6.7M9.6 9.6l1.7 1.7 3.2-3.3"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8.5 5.8v12.4l9.8-6.2z" fill="currentColor"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5.5h2.6v13H8zM13.4 5.5H16v13h-2.6z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-replay" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3M4.5 4v4h4"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15zM10 21a2.2 2.2 0 0 0 4 0"/></symbol>
+  <symbol id="i-offline" viewBox="0 0 24 24"><path d="M12 3.5v11M7.5 10 12 14.5 16.5 10M5 19.5h14"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h9M18 7h2M4 17h3M12 17h8"/><circle cx="15.5" cy="7" r="2.3"/><circle cx="9.5" cy="17" r="2.3"/></symbol>
+  <symbol id="i-weeks" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="16" rx="3.5"/><path d="M3.5 9.5h17M8.5 9.5v11M13.5 9.5v11"/></symbol>
+  <symbol id="i-moonset" viewBox="0 0 24 24"><path d="M19 13.5A7 7 0 1 1 10.5 5a5.5 5.5 0 0 0 8.5 8.5z"/><path d="M3 21h18"/></symbol>
+  <symbol id="i-gift" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M6 6l12 12"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l8.5-8.5M16.5 6l2.5 2.5M14.5 8l2 2"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></symbol>
+  <symbol id="i-noeye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5c1.6 0 3 .4 4.2 1M21.5 12S18 18.5 12 18.5c-1.6 0-3-.4-4.2-1M4 20 20 4"/></symbol>
+  <symbol id="i-pinau" viewBox="0 0 24 24"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9.5 7V4h5v3M6.2 7l1 13.5h9.6l1-13.5"/></symbol>
+</svg>
 
-<nav>
-  <div class="wrap">
-    <a class="brand" href="/"><img src="/icon.svg" alt="">Unitable</a>
-    <div class="links">
-      <a class="plain" href="#features">Features</a>
-      <a class="plain" href="#privacy">Privacy</a>
-      <a class="plain" href="#faq">FAQ</a>
-      <a class="button small js-beta" href="mailto:hello@unitable.net?subject=Unitable%20beta">Get the beta</a>
-    </div>
-  </div>
-</nav>
+<a class="skip" href="#main">Skip to content</a>
 
-<header class="hero">
+<header class="nav">
   <div class="wrap">
-    <div>
-      <span class="eyebrow"><span class="dot"></span>Free beta on TestFlight · ANU</span>
-      <h1>Your uni day, <span class="answer">answered.</span></h1>
-      <p class="lead">Your timetable, Canvas due dates, free rooms and when your friends are free, in one app. Connect once and it keeps itself up to date.</p>
-      <div class="cta">
-        <a class="button js-beta" href="mailto:hello@unitable.net?subject=Unitable%20beta">Get the beta on TestFlight</a>
-        <a class="button ghost" href="#features">See what it does</a>
-      </div>
-      <p class="note">Free · iPhone · Android coming later</p>
-    </div>
-    <div class="shot">
-      <div class="phone"><img src="/img/today.jpg" alt="Unitable's Today screen: MATH1013 in 44 minutes, with the day's classes and a free hour with a friend"></div>
-    </div>
+    <a class="brand" href="/" aria-label="Unitable home">
+      <svg viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="8" fill="var(--track)"/><rect x="5" y="4.5" width="20" height="7" rx="2.5" fill="var(--spent)"/><rect x="5" y="13.5" width="20" height="5" rx="2.5" fill="var(--h0-solid)"/><rect x="5" y="20.5" width="20" height="5" rx="2.5" fill="var(--h3-fill)"/><rect x="2.5" y="12.4" width="25" height="1.8" rx=".9" fill="var(--ink)"/></svg>
+      Unitable
+    </a>
+    <nav class="links" aria-label="Sections">
+      <a href="#features">Features</a>
+      <a href="#privacy">Privacy</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <button class="theme-btn" type="button" data-theme-toggle aria-label="Use light appearance">
+      <svg class="icon moon"><use href="#i-moon"/></svg>
+      <svg class="icon sun"><use href="#i-sun"/></svg>
+    </button>
+    <a class="btn small js-beta" href="mailto:hello@unitable.net?subject=Unitable%20beta">Get the beta</a>
   </div>
 </header>
 
+<main id="main">
+
+<section class="hero" aria-labelledby="hero-title">
+  <div class="wrap">
+    <div class="hero-copy">
+      <div class="eyebrow rise" style="--i:0">Free beta on TestFlight · ANU · iPhone</div>
+      <h1 id="hero-title" class="rise" style="--i:1"><span class="dim">Your uni day,</span><br>answered.</h1>
+      <p class="lead rise" style="--i:2">Your timetable, Canvas due dates, free rooms and when your friends are free, in one app. Connect once and it keeps itself up to date.</p>
+      <div class="cta rise" style="--i:3">
+        <a class="btn js-beta" href="mailto:hello@unitable.net?subject=Unitable%20beta">Get the beta on TestFlight</a>
+        <a class="ghost big" href="#features">See what it does</a>
+      </div>
+      <p class="note rise" style="--i:4">Free, with no ads. Android is coming later.</p>
+    </div>
+
+    <div class="hero-demo rise" style="--i:3">
+      <div class="phone">
+        <div class="screen" id="today-demo" aria-label="Interactive demo of Unitable's Today screen" role="region">
+          <div class="status" aria-hidden="true">
+            <span class="tab-num" data-status-time>10:38</span>
+            <span class="island"></span>
+            <span class="bars">
+              <svg viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+              <svg viewBox="0 0 27 12"><rect x=".5" y=".5" width="22" height="11" rx="3.5" fill="none" stroke="currentColor" opacity=".45"/><rect x="2.5" y="2.5" width="15" height="7" rx="2"/><rect x="24" y="4" width="2" height="4" rx="1" opacity=".45"/></svg>
+            </span>
+          </div>
+          <div class="app">
+            <div class="app-head">
+              <div class="dateline" data-dateline>Today · Wed 18 Nov · Week 5</div>
+              <div class="answer" data-answer><span class="c h0">COMP1100</span> <span class="d">ends in</span> 22 min</div>
+              <div class="answer-sub" data-answer-sub>Then 3 h free with Sam · STAT1003 at 2 pm</div>
+            </div>
+            <div class="ruler" data-ruler role="group" aria-label="Days this week"></div>
+            <div class="day-wrap" data-day></div>
+            <div class="stakes" data-stakes></div>
+          </div>
+          <nav class="tabbar" aria-label="App tabs (jumps to each section)">
+            <a href="#today" aria-current="page"><svg class="icon"><use href="#i-today"/></svg>Today</a>
+            <a href="#due"><svg class="icon"><use href="#i-due"/></svg>Due</a>
+            <a href="#rooms"><svg class="icon"><use href="#i-rooms"/></svg>Rooms</a>
+            <a href="#friends"><svg class="icon"><use href="#i-friends"/></svg>Friends</a>
+            <a href="#privacy"><svg class="icon"><use href="#i-settings"/></svg>Settings</a>
+          </nav>
+          <noscript><p style="padding:16px;color:var(--ink2)">This demo needs JavaScript. The rest of the page works without it.</p></noscript>
+        </div>
+      </div>
+      <div class="clock" data-clock>
+        <button class="inkcircle" type="button" data-play aria-label="Pause the demo clock"><svg class="icon"><use href="#i-pause"/></svg></button>
+        <input class="range" type="range" min="480" max="1080" step="1" value="638" data-scrub aria-label="Demo time on Wednesday">
+        <div class="read"><span>Demo clock · drag through Wednesday</span><b data-clock-read>10:38 am</b></div>
+      </div>
+    </div>
+  </div>
+</section>
 
 <div id="features"></div>
 
-<section class="feature">
+<section class="section feature" id="today" aria-labelledby="today-title">
   <div class="wrap">
-    <div class="shot"><div class="phone"><img src="/img/today.jpg" alt="Today: the next class and how long until it starts" loading="lazy"></div></div>
-    <div>
-      <div class="kicker" style="color: var(--orange)">Today</div>
-      <h2>Your next class, the second you look.</h2>
-      <p class="sub">Open the app and the answer is at the top: what's next, how long until it starts, and where. Free gaps are marked, so you know when you can grab lunch.</p>
-      <ul>
-        <li>Room, building and time for every class</li>
-        <li>Tap any class for the details</li>
-        <li>Swipe through the week, day by day</li>
+    <div class="copy">
+      <div class="kicker"><svg class="icon"><use href="#i-today"/></svg>Today</div>
+      <h2 id="today-title">The answer comes first.</h2>
+      <p class="sub">Open Unitable and the top line already says what you need: what's on, how long is left, and what's after. It changes as the day does, so you never read a timetable to work it out.</p>
+      <ul class="points">
+        <li>Time you've used up turns grey under a moving line</li>
+        <li>The class you're in is the only one in full colour</li>
+        <li>Tap a class to open it in place; tap free time to unfold it</li>
       </ul>
     </div>
-  </div>
-</section>
-
-<section class="feature flip band">
-  <div class="wrap">
-    <div class="shot"><div class="phone"><img src="/img/week.jpg" alt="Week view: every class for the week, colour-coded by course" loading="lazy"></div></div>
-    <div>
-      <div class="kicker" style="color: var(--blue)">Week</div>
-      <h2>Your whole week at a glance.</h2>
-      <p class="sub">Every lecture, tutorial and lab, colour-coded by course. Hide classes you don't go to, and they stay hidden.</p>
+    <div class="panel">
+      <div class="eyeline">One Wednesday, five moments</div>
+      <ul class="moments" data-moments></ul>
     </div>
   </div>
 </section>
 
-<section class="feature">
+<section class="section feature flip" id="week" aria-labelledby="week-title">
   <div class="wrap">
-    <div class="shot"><div class="phone"><img src="/img/due.jpg" alt="Due: upcoming Canvas assignments and quizzes" loading="lazy"></div></div>
-    <div>
-      <div class="kicker" style="color: var(--red)">Due</div>
-      <h2>Every deadline from Canvas.</h2>
-      <p class="sub">Assignments and quizzes from all your courses in one list, with the next one at the top and key uni dates alongside.</p>
-    </div>
-  </div>
-</section>
-
-<section class="feature flip band">
-  <div class="wrap">
-    <div class="shot"><div class="phone"><img src="/img/rooms.jpg" alt="Free rooms: hundreds of rooms free across campus, by building" loading="lazy"></div></div>
-    <div>
-      <div class="kicker" style="color: var(--green)">Rooms</div>
-      <h2>Find a free room. Now, or later.</h2>
-      <p class="sub">See which rooms on campus are free right now, in an hour or tomorrow, by building, with how many seats. Library study rooms are one tap away.</p>
-    </div>
-  </div>
-</section>
-
-<section class="feature">
-  <div class="wrap">
-    <div class="shot"><div class="phone"><img src="/img/friend.jpg" alt="A friend's page: times you're both free, and their week" loading="lazy"></div></div>
-    <div>
-      <div class="kicker" style="color: var(--purple)">Friends</div>
-      <h2>See when your friends are free.</h2>
-      <p class="sub">Add friends with a code and Unitable finds the times you're both free. You choose what each friend sees: nothing, just when you're busy, or your full timetable.</p>
-      <ul>
-        <li>Free-together times, today and this week</li>
-        <li>See which classes you share, if you both opt in</li>
-        <li>Change what someone sees any time</li>
+    <div class="copy">
+      <div class="kicker"><svg class="icon"><use href="#i-weeks"/></svg>Week</div>
+      <h2 id="week-title">Every class, cut to its real length.</h2>
+      <p class="sub">A two-hour lab is twice the size of a lecture. The week lays the same days side by side, so you see its shape before you read a word.</p>
+      <ul class="points">
+        <li>Colour means one thing: your course</li>
+        <li>Hide classes you don't go to, and they stay hidden</li>
+        <li>Tap any class to jump to that day with it open</li>
       </ul>
     </div>
-  </div>
-</section>
-
-<section class="band">
-  <div class="wrap center">
-    <h2>Connect once. That's it.</h2>
-    <p class="sub">No copying timetables into a calendar. Unitable keeps everything current on its own.</p>
-    <div class="steps" style="text-align: left">
-      <div class="card"><h3>Sign in with your uni email</h3><p>We email you a 6-digit code. No password to remember.</p></div>
-      <div class="card"><h3>Connect MyTimetable and Canvas</h3><p>Sign in to them inside Unitable and it finds your calendar links for you.</p></div>
-      <div class="card"><h3>Done</h3><p>Changes to your classes show up automatically, and you're told when a class moves.</p></div>
+    <div class="panel">
+      <div class="eyeline">16 – 20 Nov · Week 5</div>
+      <div class="week" data-week style="margin-top:14px"></div>
     </div>
   </div>
 </section>
 
-<section>
-  <div class="wrap center">
-    <h2>The little things, done properly.</h2>
-    <div class="grid" style="text-align: left">
-      <div class="card"><div class="icon" style="background: var(--red)">!</div><h3>Change alerts</h3><p>A room change or cancelled class? You get a notification, not a surprise.</p></div>
-      <div class="card"><div class="icon" style="background: var(--blue)">↓</div><h3>Works offline</h3><p>Your timetable and deadlines are saved on your phone for when the Wi-Fi isn't.</p></div>
-      <div class="card"><div class="icon" style="background: var(--green)">✓</div><h3>Your timetable, your way</h3><p>Hide classes you skip, or mark a class as free so friends see the truth.</p></div>
-      <div class="card"><div class="icon" style="background: var(--orange)">◷</div><h3>Built around your semester</h3><p>Knows teaching weeks, breaks and exam periods, so the week numbers are right.</p></div>
-      <div class="card"><div class="icon" style="background: var(--purple)">◎</div><h3>Feels like iPhone</h3><p>Native controls, Dark Mode, Dynamic Type. Nothing to learn.</p></div>
-      <div class="card"><div class="icon" style="background: #3F3F46">#</div><h3>Free</h3><p>No ads, no subscriptions, no selling your data.</p></div>
-    </div>
-  </div>
-</section>
-
-<section id="privacy" class="band">
+<section class="section feature" id="due" aria-labelledby="due-title">
   <div class="wrap">
-    <div class="center">
-      <h2>Private by design.</h2>
-      <p class="sub">Your timetable is about you. We treat it that way.</p>
+    <div class="copy">
+      <div class="kicker"><svg class="icon"><use href="#i-due"/></svg>Due</div>
+      <h2 id="due-title">Every deadline from Canvas, staked out.</h2>
+      <p class="sub">Assignments, quizzes and labs from all your courses on one runway. Each kind has its own mark, and anything due within a day turns red, with a word as well as a colour.</p>
+      <ul class="points">
+        <li>Filter by course</li>
+        <li>Tap a deadline's mark to tick it off</li>
+        <li>Key uni dates sit alongside</li>
+      </ul>
     </div>
-    <div class="grid">
-      <div class="card"><h3>We never see your password</h3><p>You sign in to MyTimetable and Canvas on their own pages. Unitable only keeps the calendar link.</p></div>
-      <div class="card"><h3>Links are encrypted</h3><p>Your calendar links are encrypted and never shown again, not even to you.</p></div>
-      <div class="card"><h3>You decide what friends see</h3><p>Nothing is shared until you add a friend and choose what they can see.</p></div>
-      <div class="card"><h3>No tracking</h3><p>No ads, no analytics, no data sold. Ever.</p></div>
-      <div class="card"><h3>Stored in Australia</h3><p>Your data lives on servers in Sydney.</p></div>
-      <div class="card"><h3>Delete it all, any time</h3><p>One button in Settings removes your account and everything in it. <a href="/privacy/">Privacy policy</a></p></div>
+    <div class="panel" data-due>
+      <div class="eyeline">Due</div>
+      <div class="answer" data-due-answer></div>
+      <div class="answer-sub" data-due-sub></div>
+      <div class="runway" data-runway aria-hidden="true"></div>
+      <div class="chips" data-due-chips role="group" aria-label="Filter by course"></div>
+      <div class="label">Next 7 days</div>
+      <div class="group" data-due-soon></div>
+      <div class="label">Later</div>
+      <div class="group" data-due-later></div>
     </div>
   </div>
 </section>
 
-<section id="faq">
+<section class="section feature flip" id="rooms" aria-labelledby="rooms-title">
   <div class="wrap">
-    <h2 class="center">Questions</h2>
+    <div class="copy">
+      <div class="kicker"><svg class="icon"><use href="#i-rooms"/></svg>Rooms</div>
+      <h2 id="rooms-title">Find a free room, now or later.</h2>
+      <p class="sub">See which rooms on campus are free right now, this afternoon or tomorrow morning, by building, with how many seats and how long they stay free.</p>
+      <ul class="points">
+        <li>Search by room or building</li>
+        <li>Each room's day at a glance: hatched is free</li>
+        <li>Library study rooms are in there too</li>
+      </ul>
+    </div>
+    <div class="panel" data-rooms>
+      <div class="eyeline">Rooms</div>
+      <div class="answer" data-rooms-answer></div>
+      <div class="answer-sub" data-rooms-sub></div>
+      <label class="search"><svg class="icon"><use href="#i-search"/></svg><span class="sr">Search rooms or buildings</span><input type="search" placeholder="Search rooms or buildings" data-rooms-q autocomplete="off"></label>
+      <div class="chips" data-rooms-when role="radiogroup" aria-label="When"></div>
+      <div class="label"><span>Free then</span><span class="fine">Most free first</span></div>
+      <div class="group" data-rooms-list></div>
+    </div>
+  </div>
+</section>
+
+<section class="section feature" id="friends" aria-labelledby="friends-title">
+  <div class="wrap">
+    <div class="copy">
+      <div class="kicker"><svg class="icon"><use href="#i-friends"/></svg>Friends</div>
+      <h2 id="friends-title">See when your friends are free.</h2>
+      <p class="sub">Add friends with a code and Unitable finds the times you're all free. You choose what each friend sees: nothing, just when you're busy, or your whole timetable.</p>
+      <div class="code-chip">Your friend code <b>K7Q·2MX</b></div>
+    </div>
+    <div>
+      <div class="panel" data-friends>
+        <div class="eyeline">Friends · Wednesday</div>
+        <div class="answer" data-fr-answer></div>
+        <div class="answer-sub" data-fr-sub></div>
+        <div class="people" data-fr-people role="group" aria-label="Who to include"></div>
+        <div class="fr-axis" data-fr-axis aria-hidden="true"></div>
+      </div>
+      <div class="panel" style="margin-top:16px" data-seen-panel>
+        <div class="label" style="margin-top:0"><span>What Sam sees of your Wednesday</span></div>
+        <div class="seg" data-seen-seg role="radiogroup" aria-label="What Sam can see"></div>
+        <div class="seen" data-seen data-v="busy"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="start-title">
+  <div class="wrap">
+    <h2 id="start-title">Connect once. That's it.</h2>
+    <p class="sub">No copying your timetable into a calendar. Unitable keeps everything current on its own.</p>
+    <ol class="steps">
+      <li><h3>Sign in with your uni email</h3><p>We email you a 6-digit code. No password to remember.</p></li>
+      <li><h3>Connect MyTimetable and Canvas</h3><p>Sign in to them inside Unitable and it finds your calendar links for you.</p></li>
+      <li><h3>Done</h3><p>Changes to your classes show up by themselves, and you're told when a class moves.</p></li>
+    </ol>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="little-title">
+  <div class="wrap">
+    <h2 id="little-title">The little things, done properly.</h2>
+    <div class="facts">
+      <div><svg class="icon"><use href="#i-bell"/></svg><h3>Change alerts</h3><p>A room change or a cancelled class? You get a notification, not a surprise.</p></div>
+      <div><svg class="icon"><use href="#i-offline"/></svg><h3>Works offline</h3><p>Your timetable and deadlines are saved on your phone for when the Wi-Fi isn't.</p></div>
+      <div><svg class="icon"><use href="#i-sliders"/></svg><h3>Your timetable, your way</h3><p>Hide classes you skip, or mark one as free so friends see the truth.</p></div>
+      <div><svg class="icon"><use href="#i-weeks"/></svg><h3>Built around your semester</h3><p>Knows teaching weeks, breaks and exam periods, so the week numbers are right.</p></div>
+      <div><svg class="icon"><use href="#i-moonset"/></svg><h3>Dark by default</h3><p>Charcoal, not black, with a light mode if you'd rather. Respects Reduce Motion and larger text.</p></div>
+      <div><svg class="icon"><use href="#i-gift"/></svg><h3>Free</h3><p>No ads, no subscriptions, and no selling your data.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="privacy" aria-labelledby="privacy-title">
+  <div class="wrap">
+    <h2 id="privacy-title">Private by design.</h2>
+    <p class="sub">Your timetable is about you. We treat it that way.</p>
+    <div class="facts">
+      <div><svg class="icon"><use href="#i-key"/></svg><h3>We never see your password</h3><p>You sign in to MyTimetable and Canvas on their own pages. Unitable only keeps the calendar link.</p></div>
+      <div><svg class="icon"><use href="#i-lock"/></svg><h3>Links are encrypted</h3><p>Your calendar links are encrypted and never shown again, not even to you.</p></div>
+      <div><svg class="icon"><use href="#i-eye"/></svg><h3>You decide what friends see</h3><p>Nothing is shared until you add a friend and choose what they can see.</p></div>
+      <div><svg class="icon"><use href="#i-noeye"/></svg><h3>No tracking</h3><p>No ads, no analytics, no data sold. Ever. This site doesn't track you either.</p></div>
+      <div><svg class="icon"><use href="#i-pinau"/></svg><h3>Stored in Australia</h3><p>Your data lives on servers in Sydney.</p></div>
+      <div><svg class="icon"><use href="#i-trash"/></svg><h3>Delete it all, any time</h3><p>One button in Settings removes your account and everything in it. Read the <a href="/privacy/">privacy policy</a>.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="faq" aria-labelledby="faq-title">
+  <div class="wrap">
+    <h2 id="faq-title" class="center">Questions</h2>
     <div class="faq">
-      <details><summary>Which universities does it work with?</summary><p>ANU for now. Unitable is built so other universities can be added, so tell us if you'd like yours next.</p></details>
-      <details><summary>Is it made by ANU?</summary><p>No. Unitable is an independent app made by an ANU student. It isn't affiliated with or endorsed by the Australian National University.</p></details>
-      <details><summary>How does it get my timetable?</summary><p>MyTimetable and Canvas both give every student a private calendar link. You sign in once inside Unitable, it finds those links, and it checks them for changes from then on.</p></details>
-      <details><summary>How do I join the beta?</summary><p>Unitable is on TestFlight, Apple's app for trying apps before they're on the App Store. Tap "Get the beta", install TestFlight, then install Unitable from it.</p></details>
-      <details><summary>Is there an Android version?</summary><p>It's coming. The beta is iPhone first.</p></details>
-      <details><summary>What does it cost?</summary><p>Nothing.</p></details>
+      <details><summary>Which universities does it work with?<svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg></summary><p>ANU for now. Unitable is built so other universities can be added, so tell us if you'd like yours next.</p></details>
+      <details><summary>Is it made by ANU?<svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg></summary><p>No. Unitable is an independent app made by an ANU student. It isn't affiliated with or endorsed by the Australian National University.</p></details>
+      <details><summary>How does it get my timetable?<svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg></summary><p>MyTimetable and Canvas both give every student a private calendar link. You sign in once inside Unitable, it finds those links, and it checks them for changes from then on.</p></details>
+      <details><summary>How do I join the beta?<svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg></summary><p>Unitable is on TestFlight, Apple's app for trying apps before they're on the App Store. Tap "Get the beta", install TestFlight, then install Unitable from it.</p></details>
+      <details><summary>Is there an Android version?<svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg></summary><p>It's coming. The beta is iPhone first.</p></details>
+      <details><summary>What does it cost?<svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg></summary><p>Nothing.</p></details>
     </div>
   </div>
 </section>
 
-<section class="band">
-  <div class="wrap center">
-    <h2>Your uni day, answered.</h2>
+<section class="section closing" aria-labelledby="closing-title">
+  <div class="wrap">
+    <h2 id="closing-title"><span class="dim">Your uni day,</span> answered.</h2>
     <p class="sub">Free for ANU students on iPhone.</p>
-    <div class="cta" style="justify-content: center; margin-top: 28px">
-      <a class="button js-beta" href="mailto:hello@unitable.net?subject=Unitable%20beta">Get the beta on TestFlight</a>
+    <div class="cta">
+      <a class="btn js-beta" href="mailto:hello@unitable.net?subject=Unitable%20beta">Get the beta on TestFlight</a>
     </div>
   </div>
 </section>
+
+</main>
 
 <footer>
   <div class="wrap">
@@ -294,6 +328,10 @@
     <a href="/privacy/">Privacy</a>
     <a href="/bot/">For uni IT</a>
     <a href="mailto:hello@unitable.net">hello@unitable.net</a>
+    <span class="theme-seg" role="group" aria-label="Appearance (dark is recommended)">
+      <button type="button" data-theme-set="dark" aria-pressed="true">Dark</button>
+      <button type="button" data-theme-set="light" aria-pressed="false">Light</button>
+    </span>
   </div>
 </footer>
 
