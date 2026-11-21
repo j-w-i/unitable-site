@@ -70,6 +70,9 @@
     { classes: [k('ECON1101', 'Tutorial', 'Room 2.02', 'Copland, room 2.02', 'Copland Building', hm(9), hm(10)), k('STAT1003', 'Computer lab', 'Computer Lab 1.11', 'Copland, computer lab 1.11', 'Copland Building', hm(11), hm(13))] }
   ];
 
+  // Classes the student hasn't hidden.
+  function classesOf(d) { return WEEK[d].classes.filter(function (c) { return !S.hidden[c.id]; }); }
+
   // Deadlines, in minutes from Monday 16 Nov 00:00.
   function at(day, m) { return day * 1440 + m; }
   var DUE = [
@@ -97,8 +100,10 @@
     roomsWhen: 'now',
     roomsQ: '',
     roomsOpen: {},
-    people: { ST: true, MC: false, JL: false },
-    seen: 'busy'
+    seen: 'busy',
+    hidden: {},
+    classmates: true,
+    roomsByName: false
   };
   function nowAbs() { return at(TODAY, S.t); }
   function icon(id) { return '<svg class="icon" aria-hidden="true"><use href="#i-' + id + '"/></svg>'; }
@@ -109,7 +114,7 @@
   function codeSpan(c) { return '<span class="c h' + c.hue + '">' + c.code + '</span>'; }
 
   function answerFor(d, t) {
-    var cl = WEEK[d].classes, first = cl[0], last = cl[cl.length - 1];
+    var cl = classesOf(d), first = cl[0], last = cl[cl.length - 1];
     if (d < TODAY) return { a: '<span class="d">Done at</span> ' + short(last.end), s: cl.length + ' classes · ' + cl.map(function (c) { return c.code; }).join(', ') };
     if (d > TODAY) {
       var then = cl[1];
@@ -148,7 +153,7 @@
   nowEl.innerHTML = '<div class="now-tab"><span></span></div>';
 
   function pieces(d) {
-    var cl = WEEK[d].classes, out = [];
+    var cl = classesOf(d), out = [];
     cl.forEach(function (c, i) {
       if (i > 0) {
         var gap = c.start - cl[i - 1].end;
@@ -163,15 +168,20 @@
 
   function slabHTML(c, d) {
     var bh = slabH(c), roomy = bh >= 96;
-    var who = c.friends.length ? '<div class="who">' + c.friends.map(function () { return '<span class="av h5" style="--s:18px;--ring:var(--fill)">ST</span>'; }).join('') + '</div>' : '';
+    var who = c.friends.length ? '<div class="who">' + c.friends.map(function () { return '<span class="av" style="--acc:#c2569a;--s:18px;--ring:var(--fill)">SA</span>'; }).join('') + '</div>' : '';
     var hd = '<div class="l1"><span class="code">' + c.code + '</span><span class="act">' + esc(c.act) + '</span></div>' +
       '<div class="l2">' + esc(roomy ? c.room + ' · ' + c.where : c.room) + '</div>' + (roomy ? who : '');
+    var others = WEEK.map(function (day, i) { return day.classes.filter(function (x) { return x.code === c.code && x.act === c.act; }).map(function (x) { return WD[i] + ' ' + range(x.start, x.end); }); })
+      .reduce(function (a, b) { return a.concat(b); }, []);
     var detail =
-      '<div class="dt-in"><div class="dt-rule"></div>' +
-      '<div class="when" data-when>' + range(c.start, c.end) + ' · ' + countdown(c.end - c.start) + '</div>' +
-      '<div class="where">' + esc(c.place) + '<small>' + esc(NAMES[c.code]) + '</small></div>' +
-      (c.friends.length ? '<div class="with"><span class="av h5" style="--s:22px" aria-hidden="true">ST</span>Sam is in this class too</div>' : '') +
-      '<div class="acts"><a class="ghost" href="#rooms">' + icon('rooms') + 'Free rooms nearby</a></div></div>';
+      '<div class="dt-in">' +
+      '<div class="when" data-when>' + range(c.start, c.end) + '</div>' +
+      '<div class="where">' + icon('nav') + '<u>' + esc(c.place) + ', ' + esc(c.where) + '</u></div>' +
+      '<div class="acts"><a class="ghost" href="#rooms">' + icon('rooms') + 'Free rooms</a>' +
+      (classesOf(d).length > 1 ? '<button type="button" class="ghost" data-hide="' + c.id + '">Hide</button>' : '') +
+      c.friends.map(function () { return '<span class="av" style="--acc:#c2569a;--s:22px;--ring:var(--fill)" role="img" aria-label="Sam is in this class">SA</span>'; }).join('') +
+      '<button type="button" class="inkcircle small" data-more-class aria-expanded="false" aria-label="Class details"><svg class="icon"><use href="#i-arrow"/></svg></button></div>' +
+      '<div class="class-more" hidden><b>' + esc(NAMES[c.code]) + '</b>' + esc(c.act) + ' each week: ' + others.join(', ') + '</div></div>';
     return '<div class="piece" data-id="' + c.id + '">' +
       '<div class="tlabel">' + tab(c.start) + '<small>' + ampm(c.start) + '</small></div>' +
       '<div class="slab h' + c.hue + '" style="--bh:' + bh + 'px">' +
@@ -204,17 +214,21 @@
       '<div class="edge"></div>' +
       (foldable ? '<div class="marks" aria-hidden="true">' + marks + '</div>' : '') +
       '<div class="txt" aria-hidden="true"><div class="t1">' + countdown(len) + ' free</div><div class="t2">' + t2 + '</div></div>' +
-      (shared ? '<span class="av h5 free" style="--ring:var(--ground)" aria-hidden="true">ST</span>' : '') +
+      (shared ? '<span class="av free" style="--acc:#c2569a;--ring:var(--ground)" aria-hidden="true">SA</span>' : '') +
       (foldable ? '<button class="hit" type="button" aria-expanded="' + !!open + '" aria-label="' + label + '"></button>' +
         '<a class="ghost rooms" href="#rooms" tabindex="' + (open ? 0 : -1) + '">' + icon('rooms') + 'Free rooms nearby</a>' : '<span class="sr">' + label + '</span>') +
       '</div>' + (foldable ? brk('l', open) + brk('r', open) : '') + '</div>';
   }
 
   function renderDay(dir) {
-    var d = S.day, ps = pieces(d), cl = WEEK[d].classes;
-    var html = '<div class="day' + (dir ? ' enter' + (dir < 0 ? ' back' : '') : '') + '"><div class="track">' +
+    var d = S.day, ps = pieces(d), cl = classesOf(d);
+    var date = dateOf(d), hiddenN = WEEK[d].classes.length - cl.length;
+    var line = '<div class="day-line"><b>' + (d === TODAY ? 'Today' : WD_LONG[d]) + '</b><span>' + date.getDate() + ' Nov</span><span class="sum">' +
+      cl.length + ' class' + (cl.length === 1 ? '' : 'es') + ' · ' + range(cl[0].start, cl[cl.length - 1].end) + '</span></div>';
+    var html = '<div class="day' + (dir ? ' enter' + (dir < 0 ? ' back' : '') : '') + '">' + line + '<div class="track">' +
       ps.map(function (p) { return p.free ? pleatHTML(p, d) : slabHTML(p, d); }).join('') +
-      '</div><div class="day-end">Done at ' + short(cl[cl.length - 1].end) + '</div></div>';
+      '</div><div class="day-end">Done at ' + short(cl[cl.length - 1].end) +
+      (hiddenN ? ' · ' + hiddenN + ' hidden <button type="button" class="link" data-unhide>Show</button>' : '') + '</div></div>';
     els.day.innerHTML = html;
     els.dayEl = els.day.firstChild;
     els.track = $('.track', els.dayEl);
@@ -225,7 +239,7 @@
 
   // Time-dependent parts of the day; cheap enough to run every tick.
   function updateDay() {
-    var d = S.day, t = S.t, cl = WEEK[d].classes;
+    var d = S.day, t = S.t, cl = classesOf(d);
     var live = null;
     if (d === TODAY) {
       for (var i = 0; i < cl.length; i++) if (t < cl[i].end) { live = cl[i]; break; }
@@ -325,12 +339,12 @@
 
   function miniHTML(d, t) {
     var out = '';
-    WEEK[d].classes.forEach(function (c) {
-      var top = 3 + (c.start - START) / (END - START) * 16, h = Math.max(2, (c.end - c.start) / (END - START) * 16);
+    classesOf(d).forEach(function (c) {
+      var top = 3 + (c.start - START) / (END - START) * 18, h = Math.max(2, (c.end - c.start) / (END - START) * 18);
       var gone = d < TODAY || (d === TODAY && t >= c.end);
       out += '<i class="h' + c.hue + (gone ? ' gone' : '') + '" style="top:' + top.toFixed(1) + 'px;height:' + h.toFixed(1) + 'px"></i>';
     });
-    if (d === TODAY && t > START && t < END) out += '<b style="top:' + (3 + (t - START) / (END - START) * 16 - 0.75).toFixed(1) + 'px"></b>';
+    if (d === TODAY && t > START && t < END) out += '<b style="top:' + (3 + (t - START) / (END - START) * 18 - 0.75).toFixed(1) + 'px"></b>';
     return out;
   }
 
@@ -339,8 +353,9 @@
     for (var d = 0; d < 5; d++) {
       var date = dateOf(d);
       html += '<button type="button" data-day="' + d + '" aria-pressed="' + (d === S.day) + '"' + (d === TODAY ? ' aria-current="date"' : '') +
-        ' aria-label="' + WD_LONG[d] + ' ' + date.getDate() + ' November, ' + WEEK[d].classes.length + ' classes">' +
-        '<span class="wd" aria-hidden="true">' + WD[d].toUpperCase() + '</span><span class="mini" aria-hidden="true"></span><span class="num" aria-hidden="true">' + date.getDate() + '</span></button>';
+        ' aria-label="' + WD_LONG[d] + ' ' + date.getDate() + ' November, ' + classesOf(d).length + ' classes">' +
+        '<span class="wd" aria-hidden="true">' + WD[d].toUpperCase() + '</span><span class="mini-wrap" aria-hidden="true"><span class="mini"></span>' +
+        (DUE.some(function (x) { return Math.floor(x.at / 1440) === d; }) ? '<i class="stake"></i>' : '') + '</span><span class="num" aria-hidden="true">' + date.getDate() + '</span></button>';
     }
     els.ruler.innerHTML = html + '<span class="mark" aria-hidden="true"></span>';
     els.mark = $('.mark', els.ruler);
@@ -393,9 +408,11 @@
 
   function updateHeader() {
     var d = S.day, date = dateOf(d);
-    var line = (d === TODAY ? 'Today · ' : '') + WD[d] + ' ' + date.getDate() + ' Nov · Week 5';
+    var line = 'Today · ' + WD[TODAY] + ' ' + dateOf(TODAY).getDate() + ' Nov · Week 5';
+    els.home.hidden = d === TODAY;
     if (els.dateline.textContent !== line) els.dateline.textContent = line;
-    var a = answerFor(d, S.t);
+    // The answer is always about now; the day being looked at is named above its track.
+    var a = answerFor(TODAY, S.t);
     if (els.answer.innerHTML !== a.a) els.answer.innerHTML = a.a;
     if (els.answerSub.innerHTML !== a.s) els.answerSub.innerHTML = a.s;
   }
@@ -410,7 +427,7 @@
     els.scrub.setAttribute('aria-valuetext', 'Wednesday ' + clock(S.t));
     // The scrubber's bed is a sideways day: course ticks, grey once spent.
     var span = END - START, stops = [];
-    WEEK[TODAY].classes.forEach(function (c) {
+    classesOf(TODAY).forEach(function (c) {
       var a = ((c.start - START) / span * 100).toFixed(2), b = ((c.end - START) / span * 100).toFixed(2);
       var col = S.t >= c.end ? 'var(--spent)' : 'var(--h' + c.hue + '-acc)';
       stops.push('linear-gradient(to right, transparent ' + a + '%, ' + col + ' ' + a + '%, ' + col + ' ' + b + '%, transparent ' + b + '%) 0 7px / 100% 8px no-repeat');
@@ -496,7 +513,7 @@
     html += '</div>';
     for (d = 0; d < 5; d++) {
       html += '<div class="wcol" style="height:' + h + 'px" role="group" aria-label="' + WD_LONG[d] + '">';
-      WEEK[d].classes.forEach(function (c) {
+      classesOf(d).forEach(function (c) {
         var top = (c.start - WK.start) * WK.px + 2, ht = (c.end - c.start) * WK.px - 4;
         html += '<button type="button" class="wslab h' + c.hue + '" data-d="' + d + '" data-id="' + c.id + '" style="top:' + top + 'px;height:' + ht + 'px" aria-label="' +
           c.code + ' ' + c.act + ', ' + WD_LONG[d] + ' ' + short(c.start) + ' to ' + short(c.end) + '. Open on the day">' +
@@ -511,10 +528,10 @@
     els.week.innerHTML = html;
   }
   function updateWeek() {
-    var t = S.t, cl = WEEK[TODAY].classes, live = null;
+    var t = S.t, cl = classesOf(TODAY), live = null;
     for (var i = 0; i < cl.length; i++) if (t < cl[i].end) { live = cl[i]; break; }
     els.week.querySelectorAll('.wslab').forEach(function (b) {
-      var d = +b.dataset.d, c = WEEK[d].classes.filter(function (x) { return x.id === b.dataset.id; })[0];
+      var d = +b.dataset.d, c = classesOf(d).filter(function (x) { return x.id === b.dataset.id; })[0];
       var past = d < TODAY || (d === TODAY && t >= c.end), happening = d === TODAY && t >= c.start && t < c.end;
       b.classList.toggle('past', past);
       b.classList.toggle('live', c === live);
@@ -528,12 +545,37 @@
   // ---------- Due ----------
 
   var dueSig = '';
+  var COURSES = ['COMP1100', 'ECON1101', 'MATH1013', 'STAT1003'];
+  // A segmented control: a recessed track with a raised sheet on the choice, one tab stop.
+  function segHTML(attr, opts, value) {
+    var i = Math.max(0, opts.map(function (o) { return o[0]; }).indexOf(value));
+    return '<span class="thumb" aria-hidden="true" style="width:calc((100% - 6px) / ' + opts.length + ');transform:translateX(' + i * 100 + '%)"></span>' +
+      opts.map(function (o) {
+        return '<button type="button" role="radio" ' + attr + '="' + o[0] + '" aria-checked="' + (o[0] === value) + '" tabindex="' + (o[0] === value ? 0 : -1) + '">' + o[1] + '</button>';
+      }).join('');
+  }
+  function setSeg(el, attr, value) {
+    var bs = [].slice.call(el.querySelectorAll('[role=radio]')), i = 0;
+    bs.forEach(function (b, n) { var on = b.getAttribute(attr) === value; if (on) i = n; b.setAttribute('aria-checked', String(on)); b.tabIndex = on ? 0 : -1; });
+    var th = $('.thumb', el);
+    if (el.classList.contains('scroll')) {
+      // Chips: options keep their own widths and the strip scrolls; the sheet follows the choice.
+      var b = bs[i];
+      th.style.width = b.offsetWidth + 'px';
+      th.style.transform = 'translateX(' + (b.offsetLeft - 3) + 'px)';
+    } else th.style.transform = 'translateX(' + i * 100 + '%)';
+  }
+  function dueRow(x, now) {
+    var lv = dueLevel(x, now), w = dueWhen(x, now);
+    return '<div class="item h' + HUES[x.code] + (lv === 'done' ? ' done' : '') + '">' +
+      '<button type="button" class="tilebtn" data-done="' + x.id + '" aria-pressed="' + (lv === 'done') + '" aria-label="' + esc((lv === 'done' ? 'Mark not done: ' : 'Mark done: ') + x.title) + '">' + tileHTML(x, lv, 30) + '</button>' +
+      '<div class="it"><div class="tt">' + esc(x.title) + '</div><div class="ss">' + x.code + ' · ' + KIND[x.kind] + '</div></div>' +
+      '<div class="ww' + (lv === 'urgent' ? ' urgent' : '') + '">' + w + '<small>' + clock(x.at % 1440) + '</small></div></div>';
+  }
   function renderDue() {
     var now = nowAbs(), f = S.dueFilter, start = at(TODAY, 0), span = 14 * 1440;
-    var codes = ['all', 'COMP1100', 'ECON1101', 'MATH1013', 'STAT1003'];
-    els.dueChips.innerHTML = codes.map(function (c) {
-      return '<button type="button" class="chip" data-f="' + c + '" aria-pressed="' + (f === c) + '">' + (c === 'all' ? 'All' : c) + '</button>';
-    }).join('');
+    if (!els.dueChips.firstChild) els.dueChips.innerHTML = segHTML('data-f', [['all', 'All']].concat(COURSES.map(function (c) { return [c, c]; })), f);
+    setSeg(els.dueChips, 'data-f', f);
 
     var rw = '<div class="bed"></div><span class="lbl today" style="left:0">Today</span>';
     [7, 14].forEach(function (i) {
@@ -541,7 +583,7 @@
       rw += '<span class="mon" style="left:' + x + '"></span><span class="lbl" style="left:calc(' + x + ' + 4px)">Mon ' + dateOf(i).getDate() + '</span>';
     });
     DUE.forEach(function (x) {
-      if (x.at - start > span) return;
+      if (x.at - start > span || x.at < now) return;
       var lv = dueLevel(x, now);
       rw += '<span class="dia h' + HUES[x.code] + (lv === 'urgent' ? ' urgent' : '') + (lv === 'done' ? ' done' : '') + (f !== 'all' && f !== x.code ? ' off' : '') +
         '" style="left:' + ((x.at - start) / span * 100).toFixed(2) + '%"></span>';
@@ -549,20 +591,21 @@
     rw += '<span class="rnow" style="left:' + ((now - start) / span * 100).toFixed(2) + '%"></span>';
     els.runway.innerHTML = rw;
 
-    function row(x) {
-      var lv = dueLevel(x, now), w = dueWhen(x, now);
-      return '<div class="row h' + HUES[x.code] + (lv === 'done' ? ' done' : '') + '"' + (f !== 'all' && f !== x.code ? ' hidden' : '') + '>' +
-        '<button type="button" class="tilebtn" data-done="' + x.id + '" aria-pressed="' + (lv === 'done') + '" aria-label="' + esc((lv === 'done' ? 'Mark not done: ' : 'Mark done: ') + x.title) + '">' + tileHTML(x, lv, 30) + '</button>' +
-        '<div style="min-width:0"><div class="tt">' + esc(x.title) + '</div><div class="ss"><span class="c">' + x.code + '</span> · ' + KIND[x.kind] + '</div></div>' +
-        '<div class="ww' + (lv === 'urgent' ? ' urgent' : '') + '">' + w + '<small>' + clock(x.at % 1440) + '</small></div></div>';
-    }
-    var soon = DUE.filter(function (x) { return x.at - now < 7 * 1440; }), later = DUE.filter(function (x) { return x.at - now >= 7 * 1440; });
-    function list(items) {
-      var shown = items.filter(function (x) { return f === 'all' || f === x.code; }).length;
-      return items.map(row).join('') + (shown ? '' : '<div class="empty">Nothing for ' + f + ' here.</div>');
-    }
-    els.dueSoon.innerHTML = list(soon);
-    els.dueLater.innerHTML = list(later);
+    var shown = DUE.filter(function (x) { return f === 'all' || f === x.code; });
+    var open = shown.filter(function (x) { return !S.done[x.id] && x.at > now; });
+    var day = Math.floor(now / 1440);
+    var today = open.filter(function (x) { return Math.floor(x.at / 1440) === day; });
+    var week = open.filter(function (x) { return Math.floor(x.at / 1440) !== day && x.at - now < 7 * 1440; });
+    var later = open.filter(function (x) { return x.at - now >= 7 * 1440; });
+    var done = shown.filter(function (x) { return S.done[x.id]; });
+    function section(title, items) { return items.length ? '<h3 class="screen-h">' + title + '</h3><div class="group">' + items.map(function (x) { return dueRow(x, now); }).join('') + '</div>' : ''; }
+    var html = section('Today', today) + section('Next 7 days', week) + section('Later', later) + section('Done', done);
+    els.dueLists.innerHTML = html || '<p class="fine-note center">Nothing due for ' + f + '.</p>';
+
+    var next = open[0];
+    els.dueHero.innerHTML = next ? '<div class="next-card h' + HUES[next.code] + '">' + tileHTML(next, dueLevel(next, now), 36) +
+      '<div class="it"><div class="code">' + next.code + '</div><div class="tt">' + esc(next.title) + '</div><div class="ss">' + dueWhen(next, now) + ' · ' + clock(next.at % 1440) + '</div></div>' +
+      '<svg class="icon chev-r" aria-hidden="true"><use href="#i-chevr"/></svg></div>' : '';
     tickDue(true);
   }
   function tickDue(force) {
@@ -570,17 +613,18 @@
     var sig = DUE.map(function (x) { return dueLevel(x, now); }).join();
     if (!force && sig !== dueSig) { dueSig = sig; renderDue(); return; }
     dueSig = sig;
-    var next = DUE.filter(function (x) { return x.at > now && !S.done[x.id]; })[0];
-    var inWeek = DUE.filter(function (x) { return x.at > now && x.at - now < 7 * 1440 && !S.done[x.id]; }).length;
-    var a, s;
-    if (!next) { a = '<span class="d">Nothing</span> due'; s = 'All caught up'; }
+    var f = S.dueFilter;
+    var open = DUE.filter(function (x) { return x.at > now && !S.done[x.id] && (f === 'all' || f === x.code); });
+    var next = open[0], a, s;
+    if (!next) { a = 'Nothing due'; s = 'All caught up'; }
     else {
-      var days = Math.floor(next.at / 1440) - Math.floor(now / 1440), w = dueWhen(next, now).toLowerCase();
-      a = '<span class="d">Next due</span> ' + (days === 0 ? '<span class="u">' + w + '</span>' : days === 1 ? w : 'in ' + days + ' days');
-      s = '<span class="c h' + HUES[next.code] + '">' + esc(next.title) + '</span> · ' + next.code + ' at ' + clock(next.at % 1440) + ' · ' + inWeek + ' due in the next 7 days';
+      var left = next.at - now, when = left < 1440 ? 'in ' + countdown(left) : left < 2 * 1440 ? 'tomorrow' : 'in ' + Math.floor(left / 1440) + ' days';
+      a = '<span class="d">Next due</span> <span class="' + (left < 1440 ? 'u' : '') + '">' + when + '</span>';
+      var n = open.filter(function (x) { return x.at - now < 7 * 1440; }).length;
+      s = n + ' due in the next 7 days';
     }
     els.dueAnswer.innerHTML = a;
-    els.dueSub.innerHTML = s;
+    els.dueSub.textContent = s;
   }
 
   // ---------- Rooms ----------
@@ -617,18 +661,19 @@
   });
   var WHEN = [
     { id: 'now', label: 'Now' },
-    { id: 'hour', label: 'In an hour' },
+    { id: 'h1', label: 'In 1 hour' },
+    { id: 'h2', label: 'In 2 hours' },
     { id: 'tomorrow', label: 'Tomorrow 9 am' }
   ];
   function roomsMoment() {
     if (S.roomsWhen === 'tomorrow') return { day: 1, t: hm(9) };
-    return { day: 0, t: S.t + (S.roomsWhen === 'hour' ? 60 : 0) };
+    return { day: 0, t: S.t + (S.roomsWhen === 'h1' ? 60 : S.roomsWhen === 'h2' ? 120 : 0) };
   }
   function freeUntil(room, mo) {
     var busy = room.days[mo.day];
     for (var i = 0; i < busy.length; i++) if (mo.t >= busy[i][0] && mo.t < busy[i][1]) return null;
     var next = busy.filter(function (b) { return b[0] > mo.t; })[0];
-    return next ? next[0] : hm(18);
+    return next ? next[0] : hm(24);
   }
   // The rooms a search is about: all of a building's when its name matches, otherwise the matching rooms.
   function roomsIn(b) {
@@ -636,71 +681,67 @@
     if (!q || b.name.toLowerCase().indexOf(q) >= 0) return b.rooms;
     return b.rooms.filter(function (r) { return r.name.toLowerCase().indexOf(q) >= 0; });
   }
-  function freeCount(b, mo) { return roomsIn(b).filter(function (r) { return freeUntil(r, mo) != null; }).length; }
+  function freeRooms(b, mo) { return roomsIn(b).filter(function (r) { return freeUntil(r, mo) != null; }); }
   function roomsMatches() {
     var q = S.roomsQ.trim().toLowerCase();
     return BUILDINGS.filter(function (b) {
       return !q || b.name.toLowerCase().indexOf(q) >= 0 || b.rooms.some(function (r) { return r.name.toLowerCase().indexOf(q) >= 0; });
     });
   }
+  function buildingSub(b, free, mo) {
+    var seats = free.reduce(function (a, r) { return Math.max(a, r.seats); }, 0);
+    var soonest = free.map(function (r) { return freeUntil(r, mo); }).filter(function (u) { return u < hm(24); }).sort(function (x, y) { return x - y; })[0];
+    return [seats ? 'Up to ' + seats + ' seats' : '', soonest != null && soonest - mo.t < 8 * 60 ? 'some until ' + short(soonest) : ''].filter(Boolean).join(' · ');
+  }
+  function roomItems(b, mo) {
+    var rooms = freeRooms(b, mo).map(function (r) { return { r: r, until: freeUntil(r, mo) }; })
+      .sort(function (x, y) { return y.until - x.until; });
+    var shown = rooms.slice(0, 6);
+    return shown.map(function (x) {
+      return '<div class="item"><div class="it"><div class="tt">' + (b.name === 'Chifley Library' ? 'Study room ' : 'Room ') + x.r.num + '</div><div class="ss">' + x.r.seats + ' seats</div></div>' +
+        '<div class="val">' + (x.until >= hm(18) ? 'Free all day' : 'Free until ' + short(x.until)) + '</div></div>';
+    }).join('') + (rooms.length > 6 ? '<div class="item"><div class="it"><div class="ss">and ' + (rooms.length - 6) + ' more</div></div></div>' : '');
+  }
   function renderRooms() {
-    els.roomsWhen.innerHTML = WHEN.map(function (w) {
-      return '<button type="button" class="chip" role="radio" data-w="' + w.id + '" aria-checked="' + (S.roomsWhen === w.id) + '" tabindex="' + (S.roomsWhen === w.id ? 0 : -1) + '">' + w.label + '</button>';
-    }).join('');
-    var mo = roomsMoment(), list = roomsMatches();
-    list = list.map(function (b) { return { b: b, free: freeCount(b, mo) }; })
-      .sort(function (x, y) { return y.free - x.free; });
+    if (!els.roomsWhen.firstChild) els.roomsWhen.innerHTML = segHTML('data-w', WHEN.map(function (w) { return [w.id, w.label]; }), S.roomsWhen);
+    setSeg(els.roomsWhen, 'data-w', S.roomsWhen);
+    var mo = roomsMoment(), list = roomsMatches().map(function (b) { return { b: b, free: freeRooms(b, mo) }; })
+      .filter(function (x) { return x.free.length; });
+    list.sort(S.roomsByName ? function (x, y) { return x.b.name < y.b.name ? -1 : 1; } : function (x, y) { return y.free.length - x.free.length; });
     var extra = S.roomsAll || S.roomsQ ? 0 : Math.max(0, list.length - 6);
     if (extra) list = list.slice(0, 6);
-    els.roomsList.innerHTML = list.length ? list.map(function (x, i) {
-      var id = 'bld-' + BUILDINGS.indexOf(x.b), open = !!S.roomsOpen[x.b.name];
-      return '<div class="bld" data-b="' + BUILDINGS.indexOf(x.b) + '"' + (open ? ' data-open' : '') + '>' +
+    els.roomsList.innerHTML = list.length ? list.map(function (x) {
+      var bi = BUILDINGS.indexOf(x.b), id = 'bld-' + bi, open = !!S.roomsOpen[x.b.name];
+      return '<div class="bld group" data-b="' + bi + '"' + (open ? ' data-open' : '') + '>' +
         '<button type="button" aria-expanded="' + open + '" aria-controls="' + id + '">' +
-        '<span class="big" data-free>' + x.free + '<small>of ' + roomsIn(x.b).length + '</small></span>' +
-        '<span class="nm">' + esc(x.b.name) + '<small>Up to ' + x.b.max + ' seats</small></span>' +
+        '<span class="big">' + x.free.length + '<small>of ' + roomsIn(x.b).length + '</small></span>' +
+        '<span class="nm">' + esc(x.b.name) + '<small>' + buildingSub(x.b, x.free, mo) + '</small></span>' +
         '<svg class="icon chev" aria-hidden="true"><use href="#i-chev"/></svg></button>' +
-        '<div class="rooms-list" id="' + id + '" style="height:' + (open ? 'auto' : '0') + '"' + (open ? '' : ' inert') + '><div class="rooms-in" data-rooms-in></div></div></div>';
-    }).join('') + (extra ? '<button type="button" class="more" data-more>Show ' + extra + ' more buildings</button>' : '') : '<div class="empty">No rooms or buildings match “' + esc(S.roomsQ) + '”.</div>';
-    tickRooms();
+        '<div class="rooms-list" id="' + id + '" style="height:' + (open ? 'auto' : '0') + '"' + (open ? '' : ' inert') + '><div class="rooms-in">' + (open ? roomItems(x.b, mo) : '') + '</div></div></div>';
+    }).join('') + (extra ? '<button type="button" class="more" data-more>Show ' + extra + ' more buildings</button>' : '') : '<p class="fine-note">No free rooms match “' + esc(S.roomsQ) + '”.</p>';
+    var total = 0, all = roomsMatches();
+    all.forEach(function (b) { total += freeRooms(b, mo).length; });
+    var nb = all.filter(function (b) { return freeRooms(b, mo).length; }).length;
+    els.roomsAnswer.innerHTML = total + ' free <span class="d">in ' + nb + ' building' + (nb === 1 ? '' : 's') + '</span>';
+    els.roomsSub.textContent = S.roomsWhen === 'now' ? 'Right now' : S.roomsWhen === 'tomorrow' ? 'At Thu 9 am' : 'At Wed ' + short(mo.t);
+    els.roomsTitle.textContent = S.roomsWhen === 'now' ? 'Free now' : 'Free then';
+    $('span', els.roomsSort).textContent = S.roomsByName ? 'A–Z' : 'Most free';
   }
-  function roomsHTML(b, mo) {
-    var rooms = roomsIn(b)
-      .map(function (r) { return { r: r, until: freeUntil(r, mo) }; })
-      .sort(function (x, y) { return (y.until == null ? -1 : y.until) - (x.until == null ? -1 : x.until); });
-    var shown = rooms.slice(0, 5), span = END - START;
-    return shown.map(function (x) {
-      var busy = x.r.days[mo.day], strip = '', prev = START;
-      busy.forEach(function (bk) {
-        if (bk[0] > prev) strip += '<i class="fr" style="left:' + ((prev - START) / span * 100) + '%;width:' + ((bk[0] - prev) / span * 100) + '%"></i>';
-        strip += '<i class="bk" style="left:' + ((bk[0] - START) / span * 100) + '%;width:' + ((bk[1] - bk[0]) / span * 100) + '%"></i>';
-        prev = bk[1];
-      });
-      if (prev < END) strip += '<i class="fr" style="left:' + ((prev - START) / span * 100) + '%;width:' + ((END - prev) / span * 100) + '%"></i>';
-      if (mo.t < END) strip += '<i class="sn" style="left:' + ((mo.t - START) / span * 100) + '%"></i>';
-      var until = x.until == null ? 'Booked' : x.until >= hm(18) ? (mo.t >= hm(17) ? 'Free tonight' : 'Free rest of day') : 'Free until ' + short(x.until);
-      return '<div class="room"><span><b>' + (b.name === 'Chifley Library' ? 'Study room ' : 'Room ') + x.r.num + '</b> · ' + x.r.seats + ' seats</span><span class="until' + (x.until == null ? ' no' : '') + '">' + until + '</span>' +
-        '<span class="strip" aria-hidden="true">' + strip + '</span></div>';
-    }).join('') + (rooms.length > 5 ? '<div class="fine">and ' + (rooms.length - 5) + ' more</div>' : '');
-  }
+  var roomsMinute = -1;
   function tickRooms() {
-    var mo = roomsMoment(), list = roomsMatches(), total = 0;
-    els.roomsList.querySelectorAll('.bld').forEach(function (el) {
-      var b = BUILDINGS[+el.dataset.b];
-      el.querySelector('[data-free]').firstChild.nodeValue = freeCount(b, mo);
-      if (el.hasAttribute('data-open')) el.querySelector('[data-rooms-in]').innerHTML = roomsHTML(b, mo);
-    });
-    list.forEach(function (b) { total += freeCount(b, mo); });
-    els.roomsAnswer.innerHTML = total + ' free <span class="d">in ' + list.length + ' building' + (list.length === 1 ? '' : 's') + '</span>';
-    els.roomsSub.textContent = S.roomsWhen === 'tomorrow' ? 'At 9 am tomorrow · Thu 19 Nov' : 'At ' + clock(mo.t) + ' · Wed 18 Nov';
+    // Only "now" and "in N hours" move with the clock; redraw at most once a demo quarter-hour.
+    if (S.roomsWhen === 'tomorrow') return;
+    var q = Math.floor(S.t / 15);
+    if (q === roomsMinute) return;
+    roomsMinute = q;
+    if (els.roomsList.contains(document.activeElement)) return;
+    renderRooms();
   }
   function toggleBuilding(el) {
     var b = BUILDINGS[+el.dataset.b], list = el.querySelector('.rooms-list'), btn = el.querySelector('button');
     var open = !el.hasAttribute('data-open');
     S.roomsOpen[b.name] = open;
-    if (open) {
-      el.setAttribute('data-open', '');
-      el.querySelector('[data-rooms-in]').innerHTML = roomsHTML(b, roomsMoment());
-    }
+    if (open) { el.setAttribute('data-open', ''); list.firstChild.innerHTML = roomItems(b, roomsMoment()); }
     var h = list.firstChild.scrollHeight;
     list.style.height = (open ? 0 : h) + 'px';
     list.offsetHeight;
@@ -713,90 +754,134 @@
       list.removeEventListener('transitionend', done);
       if (S.roomsOpen[b.name]) list.style.height = 'auto';
     });
-    if (reduced()) { list.style.height = open ? 'auto' : '0px'; }
+    if (reduced()) list.style.height = open ? 'auto' : '0px';
   }
 
   // ---------- Friends ----------
 
+  // Avatar colours from data/timetable_builder.dart (no green: green is your own free time).
   var PEOPLE = [
-    { id: 'ME', name: 'You', hue: 0, busy: WEEK[TODAY].classes.map(function (c) { return [c.start, c.end]; }) },
-    { id: 'ST', name: 'Sam', full: 'Sam Taylor', hue: 5, busy: [[hm(10), hm(11)], [hm(13), hm(15)], [hm(16), hm(17)]] },
-    { id: 'MC', name: 'Mia', full: 'Mia Chen', hue: 4, busy: [[hm(9), hm(10)], [hm(12), hm(13)], [hm(15), hm(17)]] },
-    { id: 'JL', name: 'Jordan', full: 'Jordan Lee', hue: 6, busy: [[hm(11), hm(12)], [hm(14), hm(16)]] }
+    { id: 'ME', name: 'You', colour: 'var(--free)', busy: [] },
+    { id: 'SA', name: 'Sam', colour: '#c2569a', busy: [[hm(10), hm(11)], [hm(13), hm(15)], [hm(16), hm(17)]] },
+    { id: 'MI', name: 'Mia', colour: '#1e9aae', busy: [[hm(9), hm(10)], [hm(12), hm(13)], [hm(15), hm(17)]] },
+    { id: 'JO', name: 'Jordan', colour: '#b8891a', busy: [[hm(11), hm(12)], [hm(14), hm(16)]] }
   ];
-  function chosen() { return PEOPLE.filter(function (p) { return p.id === 'ME' || S.people[p.id]; }); }
+  function myBusy() { return classesOf(TODAY).map(function (c) { return [c.start, c.end]; }); }
+  function busyOf(p) { return p.id === 'ME' ? myBusy() : p.busy; }
   function together(ps) {
     var out = [], m = START;
     while (m < END) {
-      var free = ps.every(function (p) { return !p.busy.some(function (b) { return m >= b[0] && m < b[1]; }); });
+      var free = ps.every(function (p) { return !busyOf(p).some(function (b) { return m >= b[0] && m < b[1]; }); });
       if (free) { if (out.length && out[out.length - 1][1] === m) out[out.length - 1][1] = m + 15; else out.push([m, m + 15]); }
       m += 15;
     }
     return out.filter(function (w) { return w[1] - w[0] >= 30; });
   }
-  function pct(m) { return ((m - START) / (END - START) * 100).toFixed(3) + '%'; }
+  function pct(m) { return ((Math.max(START, Math.min(END, m)) - START) / (END - START) * 100).toFixed(3) + '%'; }
+  function statusOf(p, t) {
+    var b = p.busy.filter(function (x) { return t >= x[0] && t < x[1]; })[0];
+    if (b) return { busy: true, text: 'In class until ' + short(b[1]) };
+    var next = p.busy.filter(function (x) { return x[0] > t && x[0] < END; })[0];
+    return { busy: false, text: next ? 'Free until ' + short(next[0]) : 'Free for the rest of the day' };
+  }
   function renderFriends() {
-    els.frPeople.innerHTML = PEOPLE.map(function (p) {
-      var me = p.id === 'ME';
-      return '<button type="button" class="person" ' + (me ? 'disabled aria-pressed="true"' : 'data-p="' + p.id + '" aria-pressed="' + !!S.people[p.id] + '"') + '>' +
-        '<span class="av ' + (me ? 'me' : 'h' + p.hue) + '" aria-hidden="true">' + (me ? 'You' : p.id) + '</span>' + (me ? 'You' : p.full) + '</button>';
-    }).join('');
-    var rows = PEOPLE.map(function (p) {
-      var me = p.id === 'ME';
-      return '<div class="arow' + (me || S.people[p.id] ? '' : ' hidden') + '" data-row="' + p.id + '"><span class="av ' + (me ? 'me' : 'h' + p.hue) + '">' + (me ? 'You' : p.id) + '</span><div class="lane">' +
-        p.busy.map(function (b) { return '<i class="busy" style="left:' + pct(b[0]) + ';width:calc(' + pct(b[1]) + ' - ' + pct(b[0]) + ')"></i>'; }).join('') + '</div></div>';
-    }).join('');
-    var ticks = '';
-    for (var m = START; m <= END; m += 120) ticks += '<span style="left:' + pct(m) + '">' + short(m) + '</span>';
-    els.frAxis.innerHTML = '<div class="lanes"><div class="lanes-in"><div data-together></div>' + rows + '<div class="anow"></div></div></div><div class="ticks">' + ticks + '</div>';
-    tickFriends();
-  }
-  function tickFriends() {
-    var ps = chosen(), ws = together(ps), t = S.t;
-    $('[data-together]', els.frAxis).innerHTML = ws.map(function (w) {
-      return '<div class="together" style="left:' + pct(w[0]) + ';width:calc(' + pct(w[1]) + ' - ' + pct(w[0]) + ')"></div>';
-    }).join('');
+    var t = S.t, rows = '', ticks = '';
     PEOPLE.forEach(function (p) {
-      var row = els.frAxis.querySelector('[data-row="' + p.id + '"]');
-      if (row) row.classList.toggle('hidden', !(p.id === 'ME' || S.people[p.id]));
+      var avatar = p.id === 'ME' ? '<span class="av me">You</span>' : '<span class="av" style="--acc:' + p.colour + '">' + p.id + '</span>';
+      var lane = '<i class="bed"></i>' +
+        (t < END ? '<i class="fr" style="left:' + pct(t) + ';right:0;background:' + p.colour + '"></i>' : '') +
+        (t > START ? '<i class="fr gone" style="left:0;width:' + pct(t) + ';background:' + p.colour + '"></i>' : '') +
+        busyOf(p).map(function (b) { return '<i class="busy' + (b[1] <= t ? ' gone' : '') + '" style="left:' + pct(b[0]) + ';width:calc(' + pct(b[1]) + ' - ' + pct(b[0]) + ')"></i>'; }).join('');
+      rows += '<div class="arow">' + avatar + '<div class="lane">' + lane + '</div></div>';
     });
-    $('.anow', els.frAxis).style.left = pct(Math.max(START, Math.min(END, t)));
-    var cur = ws.filter(function (w) { return t >= w[0] && t < w[1]; })[0], next = ws.filter(function (w) { return w[0] > t; })[0];
-    var names = ps.map(function (p) { return p.name; }), who = names.length === 2 ? names.join(' and ') : names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1];
-    var a, sub;
-    if (ps.length === 1) { a = 'Pick a friend <span class="d">to compare</span>'; sub = 'Your free time is hatched'; }
-    else {
-      if (cur) a = '<span class="d">Free together until</span> ' + short(cur[1]);
-      else if (next) a = '<span class="d">Free together</span> ' + span(next[0], next[1]);
-      else a = '<span class="d">No more free time together</span> today';
-      sub = who + (ws.length > 1 ? ' · free together ' + ws.length + ' times today' : '');
-    }
-    els.frAnswer.innerHTML = a;
-    els.frSub.textContent = sub;
+    var cols = together(PEOPLE).map(function (w) {
+      return '<i class="together' + (w[1] <= t ? ' gone' : '') + '" style="left:' + pct(w[0]) + ';width:calc(' + pct(w[1]) + ' - ' + pct(w[0]) + ')"></i>';
+    }).join('');
+    for (var m = START; m <= END; m += 120) ticks += '<span style="left:' + pct(m) + '">' + short(m) + '</span>';
+    els.frAxis.innerHTML = '<div class="lanes">' + cols + rows + (t > START && t < END ? '<i class="anow" style="left:' + pct(t) + '"></i>' : '') + '</div><div class="ticks">' + ticks + '</div>';
+
+    var friends = PEOPLE.slice(1), freeNow = friends.filter(function (p) { return !statusOf(p, t).busy; });
+    els.frAnswer.innerHTML = freeNow.length
+      ? (freeNow.length === 1 ? freeNow[0].name + ' is free' : freeNow.length + ' friends free') + ' <span class="d">now</span>'
+      : '<span class="d">No friends free</span> now';
+    var w = together(PEOPLE.slice(0, 2)).filter(function (x) { return x[1] > t; })[0];
+    els.frSub.textContent = w ? 'You and Sam: free together ' + (w[0] <= t ? 'until ' + short(w[1]) : span(w[0], w[1])) : 'No more time free with Sam today';
+    var list = friends.map(function (p) {
+      var st = statusOf(p, t);
+      return '<div class="item"><span class="av' + (st.busy ? '' : ' free') + '" style="--acc:' + p.colour + ';--s:34px;--ring:var(--sheet)" aria-hidden="true">' + p.id + '</span>' +
+        '<div class="it"><div class="tt">' + p.name + '</div><div class="ss">' + st.text + '</div></div></div>';
+    }).join('');
+    if (els.frList.innerHTML !== list) els.frList.innerHTML = list;
   }
+  function tickFriends() { renderFriends(); }
 
   function renderSeen() {
-    var opts = [['none', 'Nothing'], ['busy', 'Busy times'], ['full', 'Everything']];
-    els.seenSeg.innerHTML = '<span class="thumb" aria-hidden="true"></span>' + opts.map(function (o) {
-      return '<button type="button" role="radio" data-v="' + o[0] + '" aria-checked="' + (S.seen === o[0]) + '" tabindex="' + (S.seen === o[0] ? 0 : -1) + '">' + o[1] + '</button>';
-    }).join('');
-    var from = hm(9), span = hm(16) - from;
-    els.seen.innerHTML = WEEK[TODAY].classes.map(function (c) {
-      return '<div class="blk h' + c.hue + '" style="left:calc(4px + (100% - 8px) * ' + ((c.start - from) / span).toFixed(3) + ');width:calc((100% - 8px) * ' + ((c.end - c.start) / span).toFixed(3) + ' - 4px)">' +
+    els.seenSeg.innerHTML = segHTML('data-v', [['none', 'Nothing'], ['busy', 'Busy times'], ['full', 'Everything']], S.seen);
+    var from = hm(9), len = hm(16) - from;
+    els.seen.innerHTML = classesOf(TODAY).map(function (c) {
+      return '<div class="blk h' + c.hue + '" style="left:calc(4px + (100% - 8px) * ' + ((c.start - from) / len).toFixed(3) + ');width:calc((100% - 8px) * ' + ((c.end - c.start) / len).toFixed(3) + ' - 4px)">' +
         '<span class="code">' + c.code.slice(0, 4) + '</span><span>' + c.code.slice(4) + '</span><span class="busy">Busy</span></div>';
     }).join('') + '<div class="nothing">Sam sees nothing of your timetable</div>';
     updateSeen();
   }
   function updateSeen() {
-    var i = ['none', 'busy', 'full'].indexOf(S.seen);
     els.seen.dataset.v = S.seen;
-    var thumb = $('.thumb', els.seenSeg);
-    thumb.style.width = 'calc((100% - 6px) / 3)';
-    thumb.style.transform = 'translateX(' + i * 100 + '%)';
-    els.seenSeg.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-checked', String(b.dataset.v === S.seen)); b.tabIndex = b.dataset.v === S.seen ? 0 : -1; });
-    var label = { none: 'Sam sees nothing of your timetable', busy: 'Sam sees grey blocks when you are busy, without what or where', full: 'Sam sees your classes' }[S.seen];
-    els.seen.setAttribute('aria-label', label);
+    setSeg(els.seenSeg, 'data-v', S.seen);
     els.seen.setAttribute('role', 'img');
+    els.seen.setAttribute('aria-label', { none: 'Sam sees nothing of your timetable', busy: 'Sam sees grey blocks when you are busy, without what or where', full: 'Sam sees your classes' }[S.seen]);
+  }
+
+  // ---------- The phone: one fixed iPhone, scaled as a whole; screens follow the chapters ----------
+
+  var desktop = window.matchMedia('(min-width: 1024px)');
+  var PHONE_W = 424, PHONE_H = 896;
+  // The scale only changes with the window, never with what's on screen.
+  function fitPhone() {
+    var k;
+    if (desktop.matches) {
+      var clock = els.clock ? els.clock.offsetHeight + 18 : 80;
+      k = (window.innerHeight - 60 - 32 - clock) / PHONE_H;
+    } else {
+      k = (document.documentElement.clientWidth - 32) / PHONE_W;
+    }
+    k = Math.max(0.55, Math.min(1, k));
+    document.documentElement.style.setProperty('--k', k.toFixed(4));
+  }
+
+  var TAB_OF = { today: 0, week: 0, due: 1, rooms: 2, friends: 3 };
+  var page = 'today';
+  function setPage(name, instant) {
+    if (!desktop.matches) name = 'today';
+    if (name === page && !instant) return;
+    page = name;
+    document.querySelectorAll('.page').forEach(function (p) {
+      var on = p.dataset.page === name;
+      p.hidden = !on;
+      p.classList.toggle('on', on);
+      p.classList.toggle('enter', on && !instant);
+    });
+    var i = TAB_OF[name] || 0;
+    document.querySelectorAll('.tabbar [data-tab]').forEach(function (a, n) {
+      if (n === i) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
+    var mark = $('.tab-mark');
+    if (mark) mark.style.transform = 'translateX(' + i * 100 + '%)';
+    // Chip widths can only be measured once their screen is showing.
+    if (name === 'due' && els.dueChips && els.dueChips.firstChild) setSeg(els.dueChips, 'data-f', S.dueFilter);
+    if (name === 'rooms' && els.roomsWhen && els.roomsWhen.firstChild) setSeg(els.roomsWhen, 'data-w', S.roomsWhen);
+  }
+
+  // Desktop: each demo lives in its screen inside the phone. Smaller screens: under its chapter.
+  var slots = {};
+  function placeDemos() {
+    document.querySelectorAll('[data-demo]').forEach(function (demo) {
+      var name = demo.dataset.demo;
+      if (!slots[name]) { slots[name] = document.createComment('demo:' + name); demo.parentNode.insertBefore(slots[name], demo); }
+      var target = desktop.matches ? $('.page[data-page="' + name + '"]') : null;
+      if (target && demo.parentNode !== target) target.appendChild(demo);
+      if (!target && demo.parentNode !== slots[name].parentNode) slots[name].parentNode.insertBefore(demo, slots[name].nextSibling);
+    });
+    setPage(desktop.matches ? page : 'today', true);
   }
 
   // ---------- Wiring ----------
@@ -817,20 +902,44 @@
     els.week = $('[data-week]');
     els.runway = $('[data-runway]');
     els.dueChips = $('[data-due-chips]');
-    els.dueSoon = $('[data-due-soon]');
-    els.dueLater = $('[data-due-later]');
+    els.dueLists = $('[data-due-lists]');
+    els.dueHero = $('[data-due-hero]');
+    els.home = $('[data-home]');
     els.dueAnswer = $('[data-due-answer]');
     els.dueSub = $('[data-due-sub]');
     els.roomsWhen = $('[data-rooms-when]');
     els.roomsList = $('[data-rooms-list]');
     els.roomsAnswer = $('[data-rooms-answer]');
     els.roomsSub = $('[data-rooms-sub]');
-    els.frPeople = $('[data-fr-people]');
+    els.frList = $('[data-fr-list]');
+    els.roomsTitle = $('[data-rooms-title]');
+    els.roomsSort = $('[data-rooms-sort]');
     els.frAxis = $('[data-fr-axis]');
     els.frAnswer = $('[data-fr-answer]');
     els.frSub = $('[data-fr-sub]');
     els.seenSeg = $('[data-seen-seg]');
     els.seen = $('[data-seen]');
+    els.clock = $('[data-clock]');
+
+    placeDemos();
+    fitPhone();
+    var fitQueued = false;
+    window.addEventListener('resize', function () {
+      if (fitQueued) return;
+      fitQueued = true;
+      requestAnimationFrame(function () { fitQueued = false; fitPhone(); });
+    });
+    var onMq = function () { placeDemos(); fitPhone(); };
+    if (desktop.addEventListener) desktop.addEventListener('change', onMq); else desktop.addListener(onMq);
+    if ('IntersectionObserver' in window) {
+      var chapterIo = new IntersectionObserver(function (es) {
+        es.forEach(function (e) { if (e.isIntersecting && desktop.matches) setPage(e.target.dataset.page); });
+      }, { rootMargin: '-45% 0px -50% 0px' });
+      document.querySelectorAll('.chapter[data-page]').forEach(function (ch) { chapterIo.observe(ch); });
+    }
+    // Arriving on a chapter link (#due): start on that screen.
+    var arrived = location.hash && document.querySelector('.chapter' + location.hash.replace(/[^#\w-]/g, ''));
+    if (arrived && arrived.dataset.page) setPage(arrived.dataset.page, true);
 
     renderRuler();
     renderDay(0);
@@ -844,11 +953,45 @@
     run();
 
     els.day.addEventListener('click', function (e) {
+      var hide = e.target.closest('[data-hide]');
+      if (hide) {
+        S.hidden[hide.dataset.hide] = true;
+        S.open = null;
+        renderDay(0); renderWeek(); renderFriends(); renderSeen(); update();
+        var undo = $('[data-unhide]', els.day);
+        if (undo) undo.focus();
+        return;
+      }
+      if (e.target.closest('[data-unhide]')) {
+        S.hidden = {};
+        renderDay(0); renderWeek(); renderFriends(); renderSeen(); update();
+        return;
+      }
+      var more = e.target.closest('[data-more-class]');
+      if (more) {
+        var box = more.closest('.dt-in').querySelector('.class-more'), open = box.hidden;
+        box.hidden = !open;
+        more.setAttribute('aria-expanded', String(open));
+        var dt = more.closest('.dt');
+        dt.style.height = dt.firstChild.scrollHeight + 'px';
+        return;
+      }
       var hit = e.target.closest('.hit');
       if (!hit) return;
       var id = hit.closest('.piece').dataset.id;
       if (hit.closest('.slab')) toggleSlab(id); else togglePleat(id);
     });
+    els.home.addEventListener('click', function () { setDay(TODAY); });
+    function showWeek() {
+      if (desktop.matches) setPage('week');
+      else $('#week').scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'start' });
+    }
+    function showDay() {
+      if (desktop.matches) setPage('today');
+      else $('#today-demo').scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'start' });
+    }
+    $('[data-to-week]').addEventListener('click', showWeek);
+    $('[data-to-day]').addEventListener('click', showDay);
     els.ruler.addEventListener('click', function (e) {
       var b = e.target.closest('[data-day]');
       if (b) setDay(+b.dataset.day);
@@ -875,8 +1018,8 @@
       var b = e.target.closest('.wslab');
       if (!b) return;
       setDay(+b.dataset.d, b.dataset.id);
-      var demo = $('#today-demo');
-      demo.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'start' });
+      if (desktop.matches) setPage('today');
+      else $('#today-demo').scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'start' });
       var hit = els.pieces[b.dataset.id] && els.pieces[b.dataset.id].el.querySelector('.hit');
       if (hit) hit.focus({ preventScroll: true });
     });
@@ -886,7 +1029,6 @@
       if (!c) return;
       S.dueFilter = c.dataset.f;
       renderDue();
-      els.dueChips.querySelector('[data-f="' + S.dueFilter + '"]').focus();
     });
     function onDone(e) {
       var b = e.target.closest('[data-done]');
@@ -898,16 +1040,15 @@
       var again = document.querySelector('[data-done="' + id + '"]');
       if (again) again.focus();
     }
-    els.dueSoon.addEventListener('click', onDone);
-    els.dueLater.addEventListener('click', onDone);
+    els.dueLists.addEventListener('click', onDone);
 
     els.roomsWhen.addEventListener('click', function (e) {
       var c = e.target.closest('[data-w]');
       if (!c) return;
       S.roomsWhen = c.dataset.w;
       renderRooms();
-      els.roomsWhen.querySelector('[data-w="' + S.roomsWhen + '"]').focus();
     });
+    els.roomsSort.addEventListener('click', function () { S.roomsByName = !S.roomsByName; renderRooms(); });
     $('[data-rooms-q]').addEventListener('input', function (e) { S.roomsQ = e.target.value; renderRooms(); });
     els.roomsList.addEventListener('click', function (e) {
       if (e.target.closest('[data-more]')) {
@@ -921,12 +1062,15 @@
       if (b) toggleBuilding(b.parentNode);
     });
 
-    els.frPeople.addEventListener('click', function (e) {
-      var b = e.target.closest('[data-p]');
-      if (!b) return;
-      S.people[b.dataset.p] = !S.people[b.dataset.p];
-      b.setAttribute('aria-pressed', String(S.people[b.dataset.p]));
-      tickFriends();
+    var add = $('[data-add-friend]'), reveal = $('[data-code-reveal]');
+    add.addEventListener('click', function () {
+      reveal.hidden = !reveal.hidden;
+      add.setAttribute('aria-expanded', String(!reveal.hidden));
+    });
+    var sw = $('[data-classmates]');
+    sw.addEventListener('click', function () {
+      S.classmates = !S.classmates;
+      sw.setAttribute('aria-checked', String(S.classmates));
     });
     els.seenSeg.addEventListener('click', function (e) {
       var b = e.target.closest('[data-v]');
@@ -935,7 +1079,7 @@
       updateSeen();
     });
     // Arrow keys move through radio-style groups.
-    [els.seenSeg, els.roomsWhen].forEach(function (g) {
+    [els.seenSeg, els.roomsWhen, els.dueChips].forEach(function (g) {
       g.addEventListener('keydown', function (e) {
         var step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
         if (!step && e.key !== 'Home' && e.key !== 'End') return;
@@ -944,8 +1088,7 @@
         e.preventDefault();
         var n = e.key === 'Home' ? bs[0] : e.key === 'End' ? bs[bs.length - 1] : bs[(i + step + bs.length) % bs.length];
         n.click();
-        var again = g.querySelector('[data-v="' + n.dataset.v + '"],[data-w="' + n.dataset.w + '"]');
-        (again || n).focus();
+        n.focus();
       });
     });
 
