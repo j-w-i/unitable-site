@@ -47,17 +47,18 @@
 
 <main id="main" class="doc">
 <h1>Privacy policy</h1>
-<p class="meta">Unitable · last updated 19 November 2026</p>
+<p class="meta">Unitable · last updated 23 November 2026</p>
 
-<p>Unitable shows your uni timetable, due dates, free rooms and friends' free time in one app. This page explains what it stores, why, who helps run it, and how to delete everything. Unitable is run by an individual student developer in Australia and follows the Australian Privacy Principles.</p>
+<p>Unitable shows your uni timetable, due dates, free rooms, and your friends' and groups' free time in one app. This page explains what it stores, why, who helps run it, and how to delete everything. Unitable is run by an individual student developer in Australia and follows the Australian Privacy Principles.</p>
 
 <h2>The short version</h2>
 <ul class="summary">
   <li>We only store what the app needs to work. No ads, no tracking, no analytics, and we never sell data.</li>
-  <li>We never see or store your uni password. You sign in to MyTimetable and Canvas on your uni's own pages.</li>
+  <li>We never see or store your uni password. You sign in to MyTimetable and Canvas on your uni's own pages, on your phone.</li>
   <li>Your private calendar links are encrypted and never shown again, even to you.</li>
-  <li>Friends only see what you choose to share with each of them.</li>
-  <li>Settings → Delete my account removes everything, straight away.</li>
+  <li>Friends only see what you choose to share with each of them. Groups you join see when you're free and busy.</li>
+  <li>If you pay for the calendar link, Apple handles the payment. We never see your card details.</li>
+  <li>Settings → Delete account removes everything about you, straight away.</li>
 </ul>
 
 <h2>What we store</h2>
@@ -69,31 +70,37 @@
   <tr><td>Your classes, due dates and recent changes to them</td><td>To show your timetable and tell you when something changes.</td></tr>
   <tr><td>Classes you've removed or marked as free</td><td>So your timetable and free time stay as you set them.</td></tr>
   <tr><td>Your friends, friend requests and what you share with each</td><td>To show free time together, and to share only what you allow.</td></tr>
+  <tr><td>Groups you're in, what you share with each, events you add to them, and whether you're going</td><td>So everyone in a group can see when the others are free and plan things together. Group members see each other's names and free and busy times, or your classes too if you choose to share them.</td></tr>
+  <tr><td>Group invites you send or receive, and each group's join code</td><td>So you can invite friends to a group, and anyone with the code can join.</td></tr>
   <tr><td>Whether you've turned on class matching</td><td>Off by default. When on, friends can see which of your classes you share.</td></tr>
   <tr><td>A notification token for your device, and the notifications sent to you</td><td>To send alerts like class changes. You can turn these off.</td></tr>
-  <tr><td>A private link for calendar apps, if you create one</td><td>So a calendar app can show your timetable. Only a scrambled form of the link is stored.</td></tr>
+  <tr><td>A private link for calendar apps, if you create one</td><td>So a calendar app can show your timetable and your groups' events. Only a scrambled form of the link is stored.</td></tr>
+  <tr><td>Whether you have the calendar link subscription: which store it came from, when it renews or ends, and whether it will renew</td><td>So the calendar link works on every device you sign in on. We don't receive or store your payment details.</td></tr>
 </table>
-<p>The app also keeps a copy of your timetable on your phone so it works offline. If you sign in to MyTimetable or Canvas inside Unitable, your phone remembers that university sign-in so you don't have to sign in again; only Unitable on your phone can use it, and we never see your password. Both are removed when you sign out of Unitable.</p>
+<p>The app also keeps a copy of your timetable on your phone so it works offline. If you sign in to MyTimetable or Canvas inside Unitable, you sign in on your uni's own page. Unitable can fill in the email and password your iPhone has saved, but it only types them into that page on your phone; it never stores them or sends them anywhere else. Your phone then remembers that university sign-in so you don't have to sign in again; only Unitable on your phone can use it. Both are removed when you sign out of Unitable.</p>
 <p>Unitable also shows public uni information, like room bookings and key dates, taken from your uni's public websites. That isn't about you.</p>
 
 <h2>Who helps run Unitable</h2>
 <ul>
   <li><span><strong>Supabase</strong> hosts the database and servers, in Sydney, Australia.</span></li>
-  <li><span><strong>Expo</strong> builds the app and passes notifications to Apple.</span></li>
-  <li><span><strong>Apple</strong> delivers notifications to your iPhone and runs TestFlight and the App Store.</span></li>
+  <li><span><strong>Apple</strong> delivers notifications to your iPhone, runs TestFlight and the App Store, and takes payment if you buy the calendar link subscription.</span></li>
+  <li><span><strong>RevenueCat</strong> checks calendar link purchases with Apple, so your subscription works on every device. It knows your Unitable account ID and your purchase, not your name or email.</span></li>
+  <li><span><strong>Google</strong> (Firebase Cloud Messaging) will deliver notifications on Android, once the Android app is out.</span></li>
+  <li><span><strong>Expo</strong> built the earlier version of the app and passes its notifications to Apple.</span></li>
   <li><span><strong>Resend</strong> sends the sign-in code emails.</span></li>
 </ul>
 <p>They only get what they need to do that job. We don't share your information with anyone else unless the law requires it.</p>
 
 <h2>Keeping it safe</h2>
-<p>Everything travels over encrypted connections. Calendar links are encrypted with keys kept separately from the database. Each person can only read their own data, and friends only see what you've chosen to share with them.</p>
+<p>Everything travels over encrypted connections. Calendar links are encrypted with keys kept separately from the database. Each person can only read their own data. Friends only see what you've chosen to share with them, and groups only see what you share with each group.</p>
 
 <h2>How long we keep it</h2>
-<p>Until you delete your account. Disconnecting your timetable or Canvas deletes its link and the classes or due dates from it. Deleting your account (Settings → Delete my account and data) removes everything about you at once. Our hosting provider's backups may hold a copy for up to 7 days before it's gone for good.</p>
+<p>Until you delete your account. Disconnecting your timetable or Canvas deletes its link and the classes or due dates from it. Leaving a group stops it seeing your times and takes its events off your timetable. Deleting your account (Settings → Delete account) removes everything about you at once. Events you added to a group stay for its other members, without your name on them, until someone in the group deletes them. A calendar link subscription is billed by Apple, so cancel it in your Apple account settings as well. Our hosting provider's backups may hold a copy for up to 7 days before it's gone for good.</p>
 
 <h2>Your choices</h2>
 <ul>
   <li>Change what each friend sees, or remove them, at any time.</li>
+  <li>Choose whether a group sees just when you're busy or your classes too, or leave the group, at any time.</li>
   <li>Turn class matching and notifications on or off in Settings.</li>
   <li>Ask us for a copy of your information, or to correct it, using the contact below.</li>
 </ul>
