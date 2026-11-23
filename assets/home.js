@@ -815,20 +815,27 @@
   }
   function tickFriends() { renderFriends(); }
 
+  // What a friend sees of your Wednesday, at each visibility level.
   function renderSeen() {
-    els.seenSeg.innerHTML = segHTML('data-v', [['none', 'Nothing'], ['busy', 'Busy times'], ['full', 'Everything']], S.seen);
-    var from = hm(9), len = hm(16) - from;
-    els.seen.innerHTML = classesOf(TODAY).map(function (c) {
-      return '<div class="blk h' + c.hue + '" style="left:calc(4px + (100% - 8px) * ' + ((c.start - from) / len).toFixed(3) + ');width:calc((100% - 8px) * ' + ((c.end - c.start) / len).toFixed(3) + ' - 4px)">' +
-        '<span class="code">' + c.code.slice(0, 4) + '</span><span>' + c.code.slice(4) + '</span><span class="busy">Busy</span></div>';
-    }).join('') + '<div class="nothing">Sam sees nothing of your timetable</div>';
+    if (!els.seenSeg.firstChild) els.seenSeg.innerHTML = segHTML('data-v', [['none', 'Nothing'], ['busy', 'Busy times'], ['full', 'Everything']], S.seen);
     updateSeen();
   }
   function updateSeen() {
-    els.seen.dataset.v = S.seen;
     setSeg(els.seenSeg, 'data-v', S.seen);
-    els.seen.setAttribute('role', 'img');
-    els.seen.setAttribute('aria-label', { none: 'Sam sees nothing of your timetable', busy: 'Sam sees grey blocks when you are busy, without what or where', full: 'Sam sees your classes' }[S.seen]);
+    var cl = classesOf(TODAY), html;
+    if (S.seen === 'none') {
+      html = '<div class="item"><div class="it"><div class="tt">Nothing</div><div class="ss">Sam can’t see your timetable or when you’re free</div></div></div>';
+    } else {
+      html = cl.map(function (c) {
+        var time = '<div class="seen-t">' + short(c.start) + '<small>' + countdown(c.end - c.start) + '</small></div>';
+        return S.seen === 'busy'
+          ? '<div class="item">' + time + '<div class="it"><div class="tt">Busy</div><div class="ss">Until ' + short(c.end) + '</div></div></div>'
+          : '<div class="item h' + c.hue + '">' + time + '<div class="it"><div class="tt"><b>' + c.code + '</b> ' + esc(c.act) + '</div><div class="ss">' + esc(c.room) + '</div></div></div>';
+      }).join('');
+    }
+    els.seen.innerHTML = html;
+    els.seen.dataset.v = S.seen;
+    els.seen.classList.remove('swap'); void els.seen.offsetWidth; els.seen.classList.add('swap');
   }
 
   // ---------- The phone: one fixed iPhone, scaled as a whole; screens follow the chapters ----------

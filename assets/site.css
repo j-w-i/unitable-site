@@ -859,3 +859,11 @@ footer a:hover { color: var(--ink); }
 .rsvp-row .seg { width: 100%; }
 .group-demo .screen-h { font-size: 17px; margin: 20px 0 8px; }
 .chapter .group-demo { margin-top: 32px; }
+
+/* What Sam sees: your Wednesday as a friend sees it. */
+.seen-list { margin-top: 12px; }
+.seen-list.swap { animation: fade 0.18s ease-out; }
+.seen-t { width: 52px; flex: none; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.seen-t small { display: block; font-size: 12px; font-weight: 400; color: var(--ink3); }
+.seen-list .tt b { color: var(--cink); font-weight: 700; }
+.seen-list[data-v="busy"] .tt { color: var(--ink2); }
