@@ -1067,6 +1067,18 @@
       reveal.hidden = !reveal.hidden;
       add.setAttribute('aria-expanded', String(!reveal.hidden));
     });
+    // Groups: say whether you're going; the count follows.
+    var rsvp = $('[data-rsvp]'), going = 'going';
+    if (rsvp) {
+      rsvp.innerHTML = segHTML('data-r', [['going', 'Going'], ['cant', 'Can\u2019t go']], going);
+      rsvp.addEventListener('click', function (e) {
+        var b = e.target.closest('[data-r]');
+        if (!b) return;
+        going = b.getAttribute('data-r');
+        setSeg(rsvp, 'data-r', going);
+        $('[data-going-count]').textContent = going === 'going' ? 3 : 2;
+      });
+    }
     var sw = $('[data-classmates]');
     sw.addEventListener('click', function () {
       S.classmates = !S.classmates;
@@ -1079,7 +1091,7 @@
       updateSeen();
     });
     // Arrow keys move through radio-style groups.
-    [els.seenSeg, els.roomsWhen, els.dueChips].forEach(function (g) {
+    [els.seenSeg, els.roomsWhen, els.dueChips, $('[data-rsvp]')].filter(Boolean).forEach(function (g) {
       g.addEventListener('keydown', function (e) {
         var step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
         if (!step && e.key !== 'Home' && e.key !== 'End') return;

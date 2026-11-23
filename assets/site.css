@@ -846,3 +846,16 @@ footer a:hover { color: var(--ink); }
 .seg.scroll::-webkit-scrollbar { display: none; }
 .seg.scroll button { flex: none; padding: 0 14px; overflow: visible; }
 .seg.scroll .thumb { left: 3px; transition: transform var(--snap-ms) var(--snap), width var(--snap-ms) var(--snap); }
+
+/* Groups demo (chapter panel). */
+.g-head { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+.stack { display: inline-flex; flex: none; }
+.stack .av { --s: 30px; box-shadow: 0 0 0 2px var(--ground); }
+.stack .av + .av { margin-left: -8px; }
+.g-name { font-size: 17px; font-weight: 600; }
+.g-sub { font-size: 13px; color: var(--ink2); }
+.g-free { display: flex; flex-wrap: wrap; gap: 8px; }
+.g-free span { position: relative; padding: 8px 12px; border-radius: 10px; background: var(--wash); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; overflow: hidden; border: 1px dashed var(--hatch-edge); }
+.rsvp-row .seg { width: 100%; }
+.group-demo .screen-h { font-size: 17px; margin: 20px 0 8px; }
+.chapter .group-demo { margin-top: 32px; }
