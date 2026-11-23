@@ -824,7 +824,7 @@
     setSeg(els.seenSeg, 'data-v', S.seen);
     var cl = classesOf(TODAY), html;
     if (S.seen === 'none') {
-      html = '<div class="item"><div class="it"><div class="tt">Nothing</div><div class="ss">Sam can’t see your timetable or when you’re free</div></div></div>';
+      html = '<div class="item"><div class="it"><div class="tt">Hidden from Sam</div><div class="ss">Not even when you’re busy</div></div></div>';
     } else {
       html = cl.map(function (c) {
         var time = '<div class="seen-t">' + short(c.start) + '<small>' + countdown(c.end - c.start) + '</small></div>';
