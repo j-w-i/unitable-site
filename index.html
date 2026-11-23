@@ -28,9 +28,9 @@
     if (t === 'light') { d.dataset.theme = 'light'; document.querySelector('meta[name=theme-color]').content = '#f8f9fa'; }
   })();
 </script>
-<link rel="stylesheet" href="/assets/site.css?v=3076de86">
-<script src="/assets/theme.js?v=3076de86" defer></script>
-<script src="/assets/home.js?v=3076de86" defer></script>
+<link rel="stylesheet" href="/assets/site.css?v=9a4e84e8">
+<script src="/assets/theme.js?v=9a4e84e8" defer></script>
+<script src="/assets/home.js?v=9a4e84e8" defer></script>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -219,6 +219,8 @@
             <div class="fr-key" aria-hidden="true"><span><i class="dots"><b style="background:var(--free)"></b><b style="background:#c2569a"></b><b style="background:#1e9aae"></b></i>Free</span><span><i class="pill"></i>Busy</span><span><i class="hatchk"></i>Everyone free</span></div>
             <h3 class="screen-h">Friends</h3>
             <div class="group" data-fr-list></div>
+            <h3 class="screen-h">Groups</h3>
+            <div class="group" data-groups-list></div>
             <h3 class="screen-h">What Sam sees</h3>
             <div class="seg" data-seen-seg role="radiogroup" aria-label="What Sam can see"></div>
             <div class="group seen-list" data-seen data-v="busy" aria-live="polite"></div>
@@ -229,7 +231,7 @@
         </div>
       </article>
 
-      <article class="chapter" id="groups" data-page="friends" aria-labelledby="groups-title">
+      <article class="chapter" id="groups" data-page="group" aria-labelledby="groups-title">
         <div class="kicker"><svg class="icon"><use href="#i-friends"/></svg>Groups</div>
         <h2 id="groups-title">Plan things with your group.</h2>
         <p class="sub">Make a group for your study crew, club or flatmates. Unitable finds the hours this week when everyone's free, and anything you plan shows up on everyone's timetable.</p>
@@ -238,21 +240,8 @@
           <li>Tap a free hour to plan something then</li>
           <li>Everyone says if they're going</li>
         </ul>
-        <div class="panel group-demo">
-          <div class="eyeline">Groups</div>
-          <div class="g-head">
-            <span class="stack" aria-hidden="true"><span class="av me">You</span><span class="av" style="--acc:#c2569a">SA</span><span class="av" style="--acc:#1e9aae">MI</span><span class="av" style="--acc:#b8891a">JO</span></span>
-            <div><div class="g-name">Study crew</div><div class="g-sub">4 people · Next: COMP1100 revision, Wed 11 am</div></div>
-          </div>
-          <h3 class="screen-h">When you're all free</h3>
-          <div class="g-free" aria-label="Times this week when everyone is free">
-            <span>Mon 5 – 7 pm</span><span>Wed 5 – 6 pm</span><span>Fri 3 – 6 pm</span>
-          </div>
-          <h3 class="screen-h">Events</h3>
-          <div class="group">
-            <div class="item"><div class="it"><div class="tt">COMP1100 revision</div><div class="ss">Wed 11 am – 12 pm · Chifley Library · <span data-going-count>3</span> going</div></div></div>
-            <div class="item rsvp-row"><div class="seg" role="radiogroup" aria-label="Are you going to COMP1100 revision?" data-rsvp></div></div>
-          </div>
+        <div class="demo" data-demo="group">
+          <div class="panel" data-group-page></div>
         </div>
       </article>
     </div>
@@ -293,6 +282,7 @@
               <div class="page" data-page="due" hidden></div>
               <div class="page" data-page="rooms" hidden></div>
               <div class="page" data-page="friends" hidden></div>
+              <div class="page" data-page="group" hidden></div>
             </div>
             <nav class="tabbar" aria-label="App tabs">
               <a href="#today" data-tab="today" aria-current="page"><svg class="icon"><use href="#i-today"/></svg>Today</a>

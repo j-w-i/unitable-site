@@ -63,15 +63,25 @@
   var KAMBRI = ['Kambri Cinema', 'Kambri Cultural Centre Cinema', 'Kambri precinct'];
   var MCH = ['Manning Clark LT', 'Manning Clark Hall', 'Kambri precinct'];
   var WEEK = [
-    { classes: [k('COMP1100', 'Lecture', KAMBRI[0], KAMBRI[1], KAMBRI[2], hm(10), hm(11), ['ST']), k('MATH1013', 'Lecture', MCH[0], MCH[1], MCH[2], hm(12), hm(13))] },
+    { classes: [k('COMP1100', 'Lecture', KAMBRI[0], KAMBRI[1], KAMBRI[2], hm(10), hm(11), ['SA']), k('MATH1013', 'Lecture', MCH[0], MCH[1], MCH[2], hm(12), hm(13))] },
     { classes: [k('ECON1101', 'Lecture', 'Copland G31', 'Copland Theatre G31', 'Copland Building', hm(11), hm(13)), k('MATH1013', 'Tutorial', 'Hanna Neumann 1.33', 'Hanna Neumann, room 1.33', 'Hanna Neumann Building', hm(15), hm(16))] },
-    { classes: [k('COMP1100', 'Lecture', KAMBRI[0], KAMBRI[1], KAMBRI[2], hm(10), hm(11), ['ST']), k('STAT1003', 'Lecture', 'Coombs LT', 'Coombs Lecture Theatre', 'Coombs Building', hm(14), hm(15))], sam: [hm(11), hm(13)] },
-    { classes: [k('MATH1013', 'Lecture', MCH[0], MCH[1], MCH[2], hm(12), hm(13)), k('COMP1100', 'Computer lab', 'CSIT N113', 'CSIT, lab N113', 'CSIT Building', hm(14), hm(16), ['ST'])] },
+    { classes: [k('COMP1100', 'Lecture', KAMBRI[0], KAMBRI[1], KAMBRI[2], hm(10), hm(11), ['SA']), k('STAT1003', 'Lecture', 'Coombs LT', 'Coombs Lecture Theatre', 'Coombs Building', hm(14), hm(15))], sam: [hm(11), hm(13)] },
+    { classes: [k('MATH1013', 'Lecture', MCH[0], MCH[1], MCH[2], hm(12), hm(13)), k('COMP1100', 'Computer lab', 'CSIT N113', 'CSIT, lab N113', 'CSIT Building', hm(14), hm(16), ['SA'])] },
     { classes: [k('ECON1101', 'Tutorial', 'Room 2.02', 'Copland, room 2.02', 'Copland Building', hm(9), hm(10)), k('STAT1003', 'Computer lab', 'Computer Lab 1.11', 'Copland, computer lab 1.11', 'Copland Building', hm(11), hm(13))] }
   ];
 
-  // Classes the student hasn't hidden.
-  function classesOf(d) { return WEEK[d].classes.filter(function (c) { return !S.hidden[c.id]; }); }
+  // Study crew's revision session: a group event on Wednesday, on everyone's timetable until they say they can't go.
+  var GEV = { id: 'g1', group: true, code: 'COMP1100 revision', act: 'Study crew', room: 'Chifley Library', place: 'Chifley Library', where: 'Chifley Library', start: hm(11), end: hm(12), hue: 4, friends: ['SA', 'MI'] };
+  WEEK[2].classes.splice(1, 0, GEV);
+  var FRIEND = { SA: { name: 'Sam', colour: '#c2569a' }, MI: { name: 'Mia', colour: '#1e9aae' }, JO: { name: 'Jordan', colour: '#b8891a' } };
+  function avHTML(id, size, ring, label) {
+    if (id === 'ME') return '<span class="av me" style="--s:' + size + 'px;--ring:' + ring + '" aria-hidden="true">You</span>';
+    return '<span class="av" style="--acc:' + FRIEND[id].colour + ';--s:' + size + 'px;--ring:' + ring + '"' + (label ? ' role="img" aria-label="' + label + '"' : ' aria-hidden="true"') + '>' + id + '</span>';
+  }
+  function what(c) { return c.group ? c.code : c.code + ' ' + c.act; }
+
+  // Classes the student hasn't hidden, and group events they haven't said they can't go to.
+  function classesOf(d) { return WEEK[d].classes.filter(function (c) { return !S.hidden[c.id] && !(c.group && S.reply === false); }); }
 
   // Deadlines, in minutes from Monday 16 Nov 00:00.
   function at(day, m) { return day * 1440 + m; }
@@ -102,6 +112,8 @@
     roomsOpen: {},
     seen: 'busy',
     hidden: {},
+    reply: null,
+    planned: [],
     classmates: true,
     roomsByName: false
   };
@@ -132,7 +144,7 @@
           var sam = WEEK[d].sam, ov = sam ? Math.max(0, Math.min(sam[1], next.start) - Math.max(sam[0], c.end)) : 0;
           sub = gap >= 15
             ? 'Then ' + countdown(gap) + ' free' + (ov ? ', ' + (ov >= gap ? 'all' : countdown(ov)) + ' with Sam' : '') + ' · ' + next.code + ' at ' + short(next.start)
-            : 'Then ' + next.code + ' ' + next.act + ' · ' + next.room;
+            : 'Then ' + what(next) + ' · ' + next.room;
         }
         return { a: codeSpan(c) + ' <span class="d">ends in</span> ' + countdown(c.end - t), s: sub };
       }
@@ -163,12 +175,43 @@
     });
     return out;
   }
+  function daySummary(cl) {
+    var n = cl.filter(function (c) { return !c.group; }).length, g = cl.length - n;
+    return n + ' class' + (n === 1 ? '' : 'es') + (g ? ', ' + g + ' group event' + (g === 1 ? '' : 's') : '');
+  }
   function slabH(c) { return Math.max(MIN_SLAB, Math.round((c.end - c.start) * PX)); }
   function pleatH(p) { var full = Math.round((p.end - p.start) * PX); return p.end - p.start > PLEAT_OVER && !S.unfolded[p.id] ? FOLDED : full; }
 
+  function eventHTML(c, d) {
+    var bh = slabH(c), going = S.reply === true;
+    var hd = '<div class="l1"><span class="code gname">' + esc(c.code) + '</span></div>' +
+      '<div class="l2">' + esc(c.act + ' · ' + c.room) + (S.reply == null ? ' · Going?' : '') + '</div>';
+    var detail =
+      '<div class="dt-in">' +
+      '<div class="when" data-when>' + range(c.start, c.end) + '</div>' +
+      '<div class="where">' + icon('nav') + '<u>' + esc(c.place) + '</u></div>' +
+      '<div class="acts"><button type="button" class="ghost" data-reply="going" aria-pressed="' + going + '">' + (going ? icon('check') : '') + 'Going</button>' +
+      '<button type="button" class="ghost" data-reply="cant">Can\u2019t go</button>' +
+      c.friends.map(function (f) { return avHTML(f, 22, 'var(--fill)', FRIEND[f].name + ' is going'); }).join('') +
+      '<button type="button" class="inkcircle small" data-more-class aria-expanded="false" aria-label="Event details"><svg class="icon"><use href="#i-arrow"/></svg></button></div>' +
+      '<div class="class-more" hidden><b>Study crew</b>Added by Sam. Bring your Lab 6 questions.</div></div>';
+    return '<div class="piece" data-id="' + c.id + '">' +
+      '<div class="tlabel">' + tab(c.start) + '<small>' + ampm(c.start) + '</small></div>' +
+      '<div class="slab h' + c.hue + '" style="--bh:' + bh + 'px">' +
+      '<div class="spent"></div>' +
+      '<div class="hd s" aria-hidden="true">' + hd + '</div>' +
+      '<div class="hd a" aria-hidden="true">' + hd + '</div>' +
+      '<span class="left-tag" aria-hidden="true"></span>' +
+      '<button class="hit" type="button" aria-expanded="false" aria-controls="dt-' + c.id + '"></button>' +
+      '<div class="body"></div>' +
+      '<div class="dt" id="dt-' + c.id + '" role="region" aria-label="' + esc(c.code) + ' details" inert>' + detail + '</div>' +
+      '</div></div>';
+  }
+
   function slabHTML(c, d) {
+    if (c.group) return eventHTML(c, d);
     var bh = slabH(c), roomy = bh >= 96;
-    var who = c.friends.length ? '<div class="who">' + c.friends.map(function () { return '<span class="av" style="--acc:#c2569a;--s:18px;--ring:var(--fill)">SA</span>'; }).join('') + '</div>' : '';
+    var who = c.friends.length ? '<div class="who">' + c.friends.map(function (f) { return avHTML(f, 18, 'var(--fill)'); }).join('') + '</div>' : '';
     var hd = '<div class="l1"><span class="code">' + c.code + '</span><span class="act">' + esc(c.act) + '</span></div>' +
       '<div class="l2">' + esc(roomy ? c.room + ' · ' + c.where : c.room) + '</div>' + (roomy ? who : '');
     var others = WEEK.map(function (day, i) { return day.classes.filter(function (x) { return x.code === c.code && x.act === c.act; }).map(function (x) { return WD[i] + ' ' + range(x.start, x.end); }); })
@@ -179,7 +222,7 @@
       '<div class="where">' + icon('nav') + '<u>' + esc(c.place) + ', ' + esc(c.where) + '</u></div>' +
       '<div class="acts"><a class="ghost" href="#rooms">' + icon('rooms') + 'Free rooms</a>' +
       (classesOf(d).length > 1 ? '<button type="button" class="ghost" data-hide="' + c.id + '">Hide</button>' : '') +
-      c.friends.map(function () { return '<span class="av" style="--acc:#c2569a;--s:22px;--ring:var(--fill)" role="img" aria-label="Sam is in this class">SA</span>'; }).join('') +
+      c.friends.map(function (f) { return avHTML(f, 22, 'var(--fill)', FRIEND[f].name + ' is in this class'); }).join('') +
       '<button type="button" class="inkcircle small" data-more-class aria-expanded="false" aria-label="Class details"><svg class="icon"><use href="#i-arrow"/></svg></button></div>' +
       '<div class="class-more" hidden><b>' + esc(NAMES[c.code]) + '</b>' + esc(c.act) + ' each week: ' + others.join(', ') + '</div></div>';
     return '<div class="piece" data-id="' + c.id + '">' +
@@ -222,13 +265,15 @@
 
   function renderDay(dir) {
     var d = S.day, ps = pieces(d), cl = classesOf(d);
-    var date = dateOf(d), hiddenN = WEEK[d].classes.length - cl.length;
+    var date = dateOf(d), hiddenN = WEEK[d].classes.filter(function (c) { return S.hidden[c.id]; }).length;
+    var declined = d === TODAY && S.reply === false;
     var line = '<div class="day-line"><b>' + (d === TODAY ? 'Today' : WD_LONG[d]) + '</b><span>' + date.getDate() + ' Nov</span><span class="sum">' +
-      cl.length + ' class' + (cl.length === 1 ? '' : 'es') + ' · ' + range(cl[0].start, cl[cl.length - 1].end) + '</span></div>';
+      daySummary(cl) + ' · ' + range(cl[0].start, cl[cl.length - 1].end) + '</span></div>';
     var html = '<div class="day' + (dir ? ' enter' + (dir < 0 ? ' back' : '') : '') + '">' + line + '<div class="track">' +
       ps.map(function (p) { return p.free ? pleatHTML(p, d) : slabHTML(p, d); }).join('') +
       '</div><div class="day-end">Done at ' + short(cl[cl.length - 1].end) +
-      (hiddenN ? ' · ' + hiddenN + ' hidden <button type="button" class="link" data-unhide>Show</button>' : '') + '</div></div>';
+      (hiddenN ? ' · ' + hiddenN + ' hidden <button type="button" class="link" data-unhide>Show</button>' : '') +
+      (declined ? ' · Not going to ' + esc(GEV.code) + ' <button type="button" class="link" data-reply="clear">Undo</button>' : '') + '</div></div>';
     els.day.innerHTML = html;
     els.dayEl = els.day.firstChild;
     els.track = $('.track', els.dayEl);
@@ -279,7 +324,7 @@
         tag.hidden = false;
       } else tag.hidden = true;
       if (happening) { nowHost = el; nowTop = sp; }
-      var label = p.code + ' ' + p.act + ', ' + short(p.start) + ' to ' + short(p.end) + ', ' + p.place +
+      var label = what(p) + (p.group ? ', Study crew group event' + (S.reply == null ? ', not answered yet' : '') : '') + ', ' + short(p.start) + ' to ' + short(p.end) + ', ' + p.place +
         (happening ? ', ends in ' + spoken(p.end - t) : past ? ', finished' : d === TODAY ? ', starts in ' + spoken(p.start - t) : '');
       var hit = el.querySelector('.hit');
       if (hit.getAttribute('aria-label') !== label) hit.setAttribute('aria-label', label);
@@ -516,8 +561,9 @@
       classesOf(d).forEach(function (c) {
         var top = (c.start - WK.start) * WK.px + 2, ht = (c.end - c.start) * WK.px - 4;
         html += '<button type="button" class="wslab h' + c.hue + '" data-d="' + d + '" data-id="' + c.id + '" style="top:' + top + 'px;height:' + ht + 'px" aria-label="' +
-          c.code + ' ' + c.act + ', ' + WD_LONG[d] + ' ' + short(c.start) + ' to ' + short(c.end) + '. Open on the day">' +
+          what(c) + ', ' + WD_LONG[d] + ' ' + short(c.start) + ' to ' + short(c.end) + '. Open on the day">' +
           '<i class="spent"></i>' + ['s', 'a'].map(function (layer) {
+            if (c.group) return '<span class="wt ' + layer + '"' + (layer === 's' ? ' aria-hidden="true"' : '') + '><span class="gt">' + esc(c.code) + '</span></span>';
             return '<span class="wt ' + layer + '"' + (layer === 's' ? ' aria-hidden="true"' : '') + '><span class="cl">' + c.code.slice(0, 4) + '</span><span class="cn">' + c.code.slice(4) + '</span>' +
               (c.end - c.start >= 120 ? '<span class="ca">' + esc(c.act === 'Computer lab' ? 'Lab' : c.act) + '</span>' : '') + '</span>';
           }).join('') + '</button>';
@@ -766,7 +812,7 @@
     { id: 'MI', name: 'Mia', colour: '#1e9aae', busy: [[hm(9), hm(10)], [hm(12), hm(13)], [hm(15), hm(17)]] },
     { id: 'JO', name: 'Jordan', colour: '#b8891a', busy: [[hm(11), hm(12)], [hm(14), hm(16)]] }
   ];
-  function myBusy() { return classesOf(TODAY).map(function (c) { return [c.start, c.end]; }); }
+  function myBusy() { return classesOf(TODAY).filter(function (c) { return !c.group || S.reply === true; }).map(function (c) { return [c.start, c.end]; }); }
   function busyOf(p) { return p.id === 'ME' ? myBusy() : p.busy; }
   function together(ps) {
     var out = [], m = START;
@@ -784,7 +830,7 @@
     var next = p.busy.filter(function (x) { return x[0] > t && x[0] < END; })[0];
     return { busy: false, text: next ? 'Free until ' + short(next[0]) : 'Free for the rest of the day' };
   }
-  function renderFriends() {
+  function axisHTML() {
     var t = S.t, rows = '', ticks = '';
     PEOPLE.forEach(function (p) {
       var avatar = p.id === 'ME' ? '<span class="av me">You</span>' : '<span class="av" style="--acc:' + p.colour + '">' + p.id + '</span>';
@@ -798,7 +844,11 @@
       return '<i class="together' + (w[1] <= t ? ' gone' : '') + '" style="left:' + pct(w[0]) + ';width:calc(' + pct(w[1]) + ' - ' + pct(w[0]) + ')"></i>';
     }).join('');
     for (var m = START; m <= END; m += 120) ticks += '<span style="left:' + pct(m) + '">' + short(m) + '</span>';
-    els.frAxis.innerHTML = '<div class="lanes">' + cols + rows + (t > START && t < END ? '<i class="anow" style="left:' + pct(t) + '"></i>' : '') + '</div><div class="ticks">' + ticks + '</div>';
+    return '<div class="lanes">' + cols + rows + (t > START && t < END ? '<i class="anow" style="left:' + pct(t) + '"></i>' : '') + '</div><div class="ticks">' + ticks + '</div>';
+  }
+  function renderFriends() {
+    var t = S.t;
+    els.frAxis.innerHTML = axisHTML();
 
     var friends = PEOPLE.slice(1), freeNow = friends.filter(function (p) { return !statusOf(p, t).busy; });
     els.frAnswer.innerHTML = freeNow.length
@@ -813,7 +863,63 @@
     }).join('');
     if (els.frList.innerHTML !== list) els.frList.innerHTML = list;
   }
-  function tickFriends() { renderFriends(); }
+  function tickFriends() {
+    renderFriends();
+    if (els.groupPage && !els.groupPage.contains(document.activeElement)) renderGroups();
+  }
+
+  // ---------- Groups (friends/groups_screen.dart) ----------
+
+  var FREE_HOURS = [[2, hm(17), hm(19)], [3, hm(16), hm(18)], [4, hm(13), hm(15)]];
+  function facesHTML(ids, size) {
+    return '<span class="faces" style="--s:' + size + 'px" aria-hidden="true">' + ids.map(function (id) { return avHTML(id, size, 'var(--sheet)'); }).join('') + '</span>';
+  }
+  function groupEvents() {
+    var list = [];
+    if (S.t < GEV.end || S.reply !== false) list.push({ id: 'g1', title: GEV.code, day: TODAY, start: GEV.start, reply: S.reply, others: GEV.friends.length });
+    S.planned.forEach(function (e, i) { list.push({ id: 'p' + i, title: 'Study session', day: e[0], start: e[1], reply: true, others: 0 }); });
+    return list;
+  }
+  function whenLabel(day, m) { return (day === TODAY ? 'Today' : day === TODAY + 1 ? 'Tomorrow' : WD[day]) + ' ' + short(m); }
+  function replyMark(r) {
+    return '<span class="reply-mark h4' + (r === false ? ' no' : '') + '" aria-hidden="true">' + (r === true ? icon('check') : r === false ? icon('plus') : '?') + '</span>';
+  }
+  function renderGroups() {
+    var evs = groupEvents(), next = evs.filter(function (e) { return e.reply !== false; })[0];
+    els.groupsList.innerHTML =
+      '<button type="button" class="item press" data-open-group>' + facesHTML(['SA', 'MI', 'JO'], 30) +
+      '<span class="it"><span class="tt">Study crew</span><span class="ss">' + (next ? 'Next: ' + esc(next.title) + ' · ' + whenLabel(next.day, next.start) : '4 people') + '</span></span>' +
+      '<svg class="icon chev-r" aria-hidden="true"><use href="#i-chevr"/></svg></button>' +
+      '<div class="item"><span class="it"><span class="tt">Join with a code</span><span class="ss">Got a group code from a friend? Join in a tap.</span></span></div>';
+    var people = [['ME', 'You', 'Owner'], ['SA', 'Sam'], ['MI', 'Mia'], ['JO', 'Jordan']];
+    els.groupPage.innerHTML =
+      '<button type="button" class="back-chip" data-group-back><svg class="icon"><use href="#i-chevr"/></svg>Friends</button>' +
+      facesHTML(['SA', 'MI', 'JO'], 44) +
+      '<div class="answer">Study crew</div><div class="answer-sub">4 people</div>' +
+      '<h3 class="screen-h">Today</h3><div class="fr-axis" aria-hidden="true">' + axisHTML() + '</div>' +
+      '<h3 class="screen-h">Events</h3><div class="group">' + evs.map(function (e) {
+        var going = e.others + (e.reply === true ? 1 : 0);
+        return '<div class="item event-row">' + replyMark(e.reply) + '<span class="it"><span class="tt">' + esc(e.title) + '</span><span class="ss">' + whenLabel(e.day, e.start) + ' · ' + going + ' going</span>' +
+          (e.id === 'g1' ? '<span class="acts"><button type="button" class="ghost" data-reply="going" aria-pressed="' + (e.reply === true) + '">Going</button><button type="button" class="ghost" data-reply="cant" aria-pressed="' + (e.reply === false) + '">Can’t go</button></span>' : '') +
+          '</span></div>';
+      }).join('') + '</div>' +
+      '<h3 class="screen-h">When you’re all free</h3><div class="group">' + FREE_HOURS.map(function (w, i) {
+        var planned = S.planned.some(function (e) { return e[0] === w[0] && e[1] === w[1]; });
+        return '<button type="button" class="item press" data-plan="' + i + '"' + (planned ? ' disabled' : '') + '><span class="free-bar h4" aria-hidden="true"></span>' +
+          '<span class="it"><span class="tt">' + WD[w[0]] + ' ' + span(w[1], w[2]) + '</span></span><span class="val">' + (planned ? 'Planned' : countdown(w[2] - w[1])) + '</span>' +
+          (planned ? '' : icon('plus')) + '</button>';
+      }).join('') + '</div>' +
+      '<p class="fine-note">The next seven days, 8 am to 9 pm, an hour or more. Tap one to plan something then.</p>' +
+      '<h3 class="screen-h">People</h3><div class="group">' + people.map(function (x) {
+        return '<div class="item">' + avHTML(x[0], 34, 'var(--sheet)') + '<span class="it"><span class="tt">' + x[1] + '</span></span>' + (x[2] ? '<span class="val">' + x[2] + '</span>' : '') + '</div>';
+      }).join('') + '</div>';
+  }
+  function setReply(r) {
+    S.reply = r;
+    if (r === false && S.open === 'g1') S.open = null;
+    if (S.day === TODAY) renderDay(0);
+    renderWeek(); renderFriends(); renderGroups(); update();
+  }
 
   // What a friend sees of your Wednesday, at each visibility level.
   function renderSeen() {
@@ -822,7 +928,7 @@
   }
   function updateSeen() {
     setSeg(els.seenSeg, 'data-v', S.seen);
-    var cl = classesOf(TODAY), html;
+    var cl = classesOf(TODAY).filter(function (c) { return !c.group; }), html;
     if (S.seen === 'none') {
       html = '<div class="item"><div class="it"><div class="tt">Hidden from Sam</div><div class="ss">Not even when you’re busy</div></div></div>';
     } else {
@@ -855,7 +961,7 @@
     document.documentElement.style.setProperty('--k', k.toFixed(4));
   }
 
-  var TAB_OF = { today: 0, week: 0, due: 1, rooms: 2, friends: 3 };
+  var TAB_OF = { today: 0, week: 0, due: 1, rooms: 2, friends: 3, group: 3 };
   var page = 'today';
   function setPage(name, instant) {
     if (!desktop.matches) name = 'today';
@@ -919,6 +1025,8 @@
     els.roomsAnswer = $('[data-rooms-answer]');
     els.roomsSub = $('[data-rooms-sub]');
     els.frList = $('[data-fr-list]');
+    els.groupsList = $('[data-groups-list]');
+    els.groupPage = $('[data-group-page]');
     els.roomsTitle = $('[data-rooms-title]');
     els.roomsSort = $('[data-rooms-sort]');
     els.frAxis = $('[data-fr-axis]');
@@ -956,6 +1064,7 @@
     renderRooms();
     renderFriends();
     renderSeen();
+    renderGroups();
     update();
     run();
 
@@ -972,6 +1081,12 @@
       if (e.target.closest('[data-unhide]')) {
         S.hidden = {};
         renderDay(0); renderWeek(); renderFriends(); renderSeen(); update();
+        return;
+      }
+      var rep = e.target.closest('[data-reply]');
+      if (rep) {
+        var v = rep.dataset.reply;
+        setReply(v === 'clear' ? null : v === 'going' ? (S.reply === true ? null : true) : false);
         return;
       }
       var more = e.target.closest('[data-more-class]');
@@ -1086,6 +1201,22 @@
         $('[data-going-count]').textContent = going === 'going' ? 3 : 2;
       });
     }
+    function openGroup() {
+      if (desktop.matches) setPage('group');
+      else $('#groups').scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'start' });
+    }
+    els.groupsList.addEventListener('click', function (e) { if (e.target.closest('[data-open-group]')) openGroup(); });
+    els.groupPage.addEventListener('click', function (e) {
+      if (e.target.closest('[data-group-back]')) { setPage('friends'); return; }
+      var r = e.target.closest('[data-reply]');
+      if (r) { setReply(r.dataset.reply === 'going' ? (S.reply === true ? null : true) : (S.reply === false ? null : false)); var again = els.groupPage.querySelector('[data-reply="' + r.dataset.reply + '"]'); if (again) again.focus(); return; }
+      var plan = e.target.closest('[data-plan]');
+      if (plan && !plan.disabled) {
+        var w = FREE_HOURS[+plan.dataset.plan];
+        S.planned.push([w[0], w[1]]);
+        renderGroups();
+      }
+    });
     var sw = $('[data-classmates]');
     sw.addEventListener('click', function () {
       S.classmates = !S.classmates;

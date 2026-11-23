@@ -867,3 +867,37 @@ footer a:hover { color: var(--ink); }
 .seen-t small { display: block; font-size: 12px; font-weight: 400; color: var(--ink3); }
 .seen-list .tt b { color: var(--cink); font-weight: 700; }
 .seen-list[data-v="busy"] .tt { color: var(--ink2); }
+
+/* ---------- Groups (friends/groups_screen.dart) ---------- */
+.hd .code.gname { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.wslab .gt { display: block; font-size: 11px; font-weight: 600; line-height: 1.2; color: var(--cink); white-space: normal; }
+.wslab.live .wt.a .gt { color: #fff; }
+.wslab.past .gt { color: var(--spent-ink); }
+.faces { display: inline-flex; flex: none; }
+.faces .av { box-shadow: 0 0 0 2px var(--ring, var(--sheet)); }
+.faces .av + .av { margin-left: calc(var(--s) * -0.4); }
+[data-group-page] > .faces { margin-top: 10px; --ring: var(--ground); }
+[data-group-page] > .faces .av { box-shadow: 0 0 0 2px var(--ground); }
+[data-group-page] > .answer { margin-top: 10px; }
+.item.press { width: 100%; text-align: left; font: inherit; color: inherit; background: none; cursor: pointer; transition: background-color 0.15s; }
+.item.press:active { background: var(--ghost); }
+.item.press[disabled] { cursor: default; }
+.item .it .tt, .item .it .ss { display: block; }
+.item > .icon { font-size: 18px; color: var(--ink2); flex: none; }
+.back-chip { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; padding: 0 12px 0 8px; margin-bottom: 4px; border-radius: 10px; background: var(--ghost); font-size: 13px; font-weight: 600; }
+.back-chip .icon { font-size: 14px; transform: rotate(180deg); }
+.chapter .back-chip { display: none; }
+.reply-mark { display: grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--fill); color: var(--cink); font-size: 14px; font-weight: 700; }
+.reply-mark .icon { font-size: 14px; stroke-width: 2.2; }
+.reply-mark.no { background: var(--track); color: var(--ink3); }
+.reply-mark.no .icon { transform: rotate(45deg); }
+.free-bar { flex: none; width: 6px; height: 30px; border-radius: 3px; background: var(--acc); opacity: 0.7; }
+.event-row { align-items: flex-start; }
+.event-row .acts { display: flex; gap: 6px; margin-top: 8px; }
+.event-row .ghost, .dt .acts .ghost[data-reply] { min-height: 30px; }
+.event-row .ghost[aria-pressed="true"] { background: var(--ink); color: var(--ground); }
+.dt .acts .ghost[aria-pressed="true"] .icon { font-size: 13px; }
+[data-group-page] > .back-chip { display: flex; width: max-content; margin-bottom: 10px; }
+[data-group-page] > .faces { display: flex; }
+.chapter [data-group-page] > .back-chip { display: none; }
+.faces .av:nth-child(1) { z-index: 3; } .faces .av:nth-child(2) { z-index: 2; } .faces .av:nth-child(3) { z-index: 1; }
